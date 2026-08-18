@@ -24,6 +24,12 @@ jobs:
         run: npm install
 
       - name: Build project
+        # Map GitHub Secrets (unprefixed) to the VITE_-prefixed env vars Vite reads.
+        # Vite only exposes vars starting with VITE_ to the client bundle at build time.
+        env:
+          VITE_MANIFEST_API_KEY: ${{ secrets.MANIFEST_API_KEY }}
+          VITE_MANIFEST_API_BASE: ${{ secrets.MANIFEST_API_BASE }}
+          VITE_EPIC_GRAPHQL_ENDPOINT: ${{ secrets.EPIC_GRAPHQL_ENDPOINT }}
         run: npm run build
 
       - name: Deploy to Hugging Face Space
