@@ -17,7 +17,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
 
       - name: Install dependencies
@@ -37,4 +37,4 @@ jobs:
           git remote add space https://OGKushhh:$HF_TOKEN@huggingface.co/spaces/OGKushhh/EpicDB
           git add .
           git commit -m "Deploy from GitHub Actions"
-          git push --force space main
+          git push --force space master:main
