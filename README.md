@@ -44,6 +44,11 @@ A GitHub Actions workflow (`.github/workflows/hf_sync.yml`) builds on every
 push to `main` and force-pushes `dist/` to the Hugging Face Space repo. HF then
 serves the static files as-is — no build step on HF.
 
+Because the force-push replaces the entire Space repo, the workflow also
+copies `README.md` (with the YAML front-matter HF needs to configure
+`sdk` / `app_file` / `pinned`) into `dist/` before pushing — so it
+survives redeployments.
+
 ### Required GitHub Secrets
 
 Set these in the **source** GitHub repo → Settings → Secrets and variables →
@@ -71,3 +76,7 @@ that injects `X-API-Key` server-side.
 - The Manifest page uses `effective_id` from `/titles` for both display and the `/info` + `/download` URL paths — never the raw `build_id`.
 - `/download` is public (no API key needed). All other manifest endpoints require `X-API-Key`.
 - Search on the Manifest page is client-side (the backend has no `/search` endpoint).
+
+## License
+
+Public domain — no rights reserved.

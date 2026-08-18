@@ -32,6 +32,12 @@ jobs:
           VITE_EPIC_GRAPHQL_ENDPOINT: ${{ secrets.EPIC_GRAPHQL_ENDPOINT }}
         run: npm run build
 
+      - name: Stage README for HF Space
+        # HF needs README.md (with YAML front-matter) at the Space repo root to
+        # configure sdk / app_file / pinned. The force-push below replaces the
+        # entire Space repo, so we copy README into dist/ before pushing.
+        run: cp README.md dist/README.md
+
       - name: Deploy to Hugging Face Space
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
