@@ -1,15 +1,17 @@
-/** Sort/order/page-size dropdowns for the Browse page. Matches ScreamDB's filter bar. */
+/** Sort/page-size dropdowns for the Manifest page. Same compact style as Browse. */
 
-export const PAGE_SIZE_OPTIONS = [10, 25, 50, 100] as const;
-export type PageSize = (typeof PAGE_SIZE_OPTIONS)[number];
+import { PAGE_SIZE_OPTIONS as BROWSE_PAGE_SIZE_OPTIONS } from "~/components/Browse/GameFilters";
+
+// Reuse the same page size options as Browse (10, 25, 50, 100).
+export const PAGE_SIZE_OPTIONS = BROWSE_PAGE_SIZE_OPTIONS;
+export type PageSize = (typeof BROWSE_PAGE_SIZE_OPTIONS)[number];
 
 export const SORT_BY = {
-  RELEVANCY: "relevancy",
-  TITLE: "title",
-  CREATION_DATE: "creationDate",
-  RELEASE_DATE: "releaseDate",
-  PC_RELEASE_DATE: "pcReleaseDate",
-  CURRENT_PRICE: "currentPrice",
+  UPLOADED_AT: "uploaded_at",
+  EFFECTIVE_ID: "effective_id",
+  FILE_TYPE: "file_type",
+  BUILD_VERSION: "build_version",
+  APP_NAME: "app_name",
 } as const;
 export type SortBy = (typeof SORT_BY)[keyof typeof SORT_BY];
 
@@ -20,12 +22,11 @@ export const SORT_DIR = {
 export type SortDir = (typeof SORT_DIR)[keyof typeof SORT_DIR];
 
 const SORT_BY_OPTIONS: Array<{ value: SortBy; label: string }> = [
-  { value: SORT_BY.RELEVANCY, label: "Relevancy" },
-  { value: SORT_BY.TITLE, label: "Title" },
-  { value: SORT_BY.CREATION_DATE, label: "Creation date" },
-  { value: SORT_BY.RELEASE_DATE, label: "Release date" },
-  { value: SORT_BY.PC_RELEASE_DATE, label: "PC release date" },
-  { value: SORT_BY.CURRENT_PRICE, label: "Price" },
+  { value: SORT_BY.UPLOADED_AT, label: "Upload date" },
+  { value: SORT_BY.EFFECTIVE_ID, label: "Build ID" },
+  { value: SORT_BY.FILE_TYPE, label: "File type" },
+  { value: SORT_BY.BUILD_VERSION, label: "Build version" },
+  { value: SORT_BY.APP_NAME, label: "App name" },
 ];
 
 const SORT_DIR_OPTIONS: Array<{ value: SortDir; label: string }> = [
@@ -33,22 +34,22 @@ const SORT_DIR_OPTIONS: Array<{ value: SortDir; label: string }> = [
   { value: SORT_DIR.DESC, label: "Descending" },
 ];
 
-export interface GameFiltersState {
+export interface ManifestFiltersState {
   pageSize: PageSize;
   sortBy: SortBy;
   sortDir: SortDir;
 }
 
-export interface GameFiltersProps {
-  state: GameFiltersState;
-  onChange: (next: Partial<GameFiltersState>) => void;
+export interface ManifestFiltersProps {
+  state: ManifestFiltersState;
+  onChange: (next: Partial<ManifestFiltersState>) => void;
 }
 
 /**
- * Compact filter bar — no text labels next to dropdowns (they're self-explanatory
- * from their selected value). Three small dropdowns in a row.
+ * Compact filter bar — no text labels next to dropdowns. Same style as Browse's
+ * GameFilters so the two pages feel consistent.
  */
-export function GameFilters({ state, onChange }: GameFiltersProps) {
+export function ManifestFilters({ state, onChange }: ManifestFiltersProps) {
   return (
     <div className="flex flex-wrap items-center gap-2">
       <select
@@ -79,7 +80,7 @@ export function GameFilters({ state, onChange }: GameFiltersProps) {
         className="input-compact"
         value={state.pageSize}
         onChange={(e) => onChange({ pageSize: Number(e.target.value) as PageSize })}
-        title="Games per page"
+        title="Entries per page"
       >
         {PAGE_SIZE_OPTIONS.map((n) => (
           <option key={n} value={n}>

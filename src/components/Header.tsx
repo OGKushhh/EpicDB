@@ -5,6 +5,7 @@ export const routes = {
   home: "/",
   manifests: "/manifests",
   browse: "/browse",
+  game: "/browse/:namespace",
 } as const;
 
 const TABS: Array<{ to: string; label: string; pattern: string }> = [
@@ -16,16 +17,17 @@ const TABS: Array<{ to: string; label: string; pattern: string }> = [
 export function Header() {
   const location = useLocation();
   return (
-    <header className="sticky top-0 z-20 border-b border-white/10 bg-[var(--color-base-2)]/90 backdrop-blur">
-      <div className="mx-auto flex h-14 max-w-7xl items-center gap-6 px-4">
-        <Link to={routes.home} className="flex items-center gap-2 font-bold">
-          <span className="inline-flex h-7 w-7 items-center justify-center rounded bg-[var(--color-accent)] text-black">
-            E
-          </span>
-          <span className="text-base tracking-tight">EpicDB</span>
+    <header className="sticky top-0 z-20 border-b border-black/30 bg-[var(--color-header-bg)]">
+      <div className="mx-auto flex h-20 max-w-7xl items-center gap-8 px-6">
+        {/* Merged logo: single box showing "EpicDB" with light-blue bg + white text. */}
+        <Link
+          to={routes.home}
+          className="inline-flex items-center justify-center rounded-md bg-[var(--color-logo-bg)] px-4 py-2 text-xl font-bold tracking-tight text-white shadow-md transition-transform hover:scale-[1.02]"
+        >
+          EpicDB
         </Link>
 
-        <nav className="flex items-center gap-1">
+        <nav className="flex items-center gap-2">
           {TABS.map((tab) => {
             const active =
               tab.pattern === routes.home
@@ -35,9 +37,9 @@ export function Header() {
               <Link
                 key={tab.to}
                 to={tab.to}
-                className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                className={`rounded-md px-5 py-2.5 text-base font-medium transition-colors ${
                   active
-                    ? "bg-white/10 text-[var(--color-text)]"
+                    ? "bg-white/15 text-[var(--color-text)]"
                     : "text-[var(--color-text-muted)] hover:bg-white/5 hover:text-[var(--color-text)]"
                 }`}
               >
@@ -47,7 +49,7 @@ export function Header() {
           })}
         </nav>
 
-        <div className="ml-auto flex items-center gap-3 text-xs text-[var(--color-text-muted)]">
+        <div className="ml-auto flex items-center gap-4 text-base text-[var(--color-text-muted)]">
           <a
             href="https://github.com/acidicoala/EpicDB#readme"
             target="_blank"

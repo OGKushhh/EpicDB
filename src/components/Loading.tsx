@@ -39,19 +39,17 @@ export function LoadingFallback({ label = "Loading…" }: { label?: string }) {
   );
 }
 
-/** Skeleton grid for games list. */
+/** Skeleton grid for games list — matches the bigger card size (240px min). */
 export function GameGridSkeleton({ count = 8 }: { count?: number }) {
   return (
-    <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
+    <div
+      className="grid gap-6"
+      style={{ gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))" }}
+    >
       {Array.from({ length: count }, (_, i) => (
-        <div
-          key={i}
-          className="card animate-pulse !p-3"
-          style={{ minHeight: 96 }}
-        >
-          <div className="mb-2 h-4 w-3/4 rounded bg-white/10" />
-          <div className="mb-1 h-3 w-1/2 rounded bg-white/5" />
-          <div className="h-3 w-2/3 rounded bg-white/5" />
+        <div key={i} className="flex flex-col gap-3 animate-pulse">
+          <div className="aspect-[3/4] w-full rounded-lg bg-white/5" />
+          <div className="h-5 w-3/4 rounded bg-white/10" />
         </div>
       ))}
     </div>

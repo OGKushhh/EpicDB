@@ -14,8 +14,9 @@ Browse the Epic-Unlocker manifest archive and the full Epic Games Store catalog 
 | Page | What it does |
 |---|---|
 | **Home** (`/`) | Intro + links to the two browsers. |
-| **Manifest** (`/manifests`) | Search + paginate the uploaded manifest archive. Click any entry for full metadata + download. |
-| **Browse** (`/browse`) | Grid of every game on the Epic Games Store (live from Epic's GraphQL). Sort, search, click a card for Item ID + store links. |
+| **Manifest** (`/manifests`) | Search + sort + paginate the uploaded manifest archive. Click any entry for full metadata + download. |
+| **Browse** (`/browse`) | Grid of every game on the Epic Games Store (live from Epic's GraphQL). Sort, search, paginate. Click a card for details. |
+| **Game detail** (`/browse/:namespace`) | Standalone page for one game — hero image, namespace, Item ID, description, and a searchable/filterable table of all catalog offers (item IDs, titles, offer types). |
 
 ## Quick start
 

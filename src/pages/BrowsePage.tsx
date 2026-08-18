@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useGameSearch, type GameCardData } from "~/hooks/useGameSearch";
+import { useGameSearch } from "~/hooks/useGameSearch";
 import {
   GameFilters,
   SORT_BY,
@@ -7,28 +7,22 @@ import {
   type GameFiltersState,
 } from "~/components/Browse/GameFilters";
 import { GameGrid } from "~/components/Browse/GameGrid";
-import { GameDetailModal } from "~/components/Browse/GameDetailModal";
 import { Pagination } from "~/components/Pagination";
 import { ErrorBlock, GameGridSkeleton, EmptyState } from "~/components/Loading";
 
 /**
  * Browse page — grid of games from the Epic Games Store (via GraphQL),
- * with search, sort, and pagination. Click a card to open the detail modal
- * with the game's namespace + Item ID and links to the store.
- *
- * This replaces the old "GraphQL Browser" page (which was a Monaco-backed
- * raw query editor). The user-facing experience is now a simple browse grid
- * like ScreamDB.
+ * with search, sort, and pagination. Click a card to navigate to the
+ * standalone game detail page at /browse/:namespace.
  */
 export function BrowsePage() {
   const [keywords, setKeywords] = useState("");
   const [page, setPage] = useState(0);
   const [filters, setFilters] = useState<GameFiltersState>({
-    pageSize: 20,
+    pageSize: 25,
     sortBy: SORT_BY.CREATION_DATE,
     sortDir: SORT_DIR.DESC,
   });
-  const [selected, setSelected] = useState<GameCardData | null>(null);
 
   // Reset to first page when search keywords or sort/page-size changes.
   useEffect(() => {
@@ -59,18 +53,18 @@ export function BrowsePage() {
     setFilters((prev) => ({ ...prev, ...next }));
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-4">
-      <header className="mb-4">
-        <h1 className="text-xl font-semibold">Game Browser</h1>
-        <p className="text-sm text-[var(--color-text-muted)]">
+    <div className="mx-auto max-w-7xl px-6 py-6">
+      <header className="mb-6">
+        <h1 className="text-3xl font-semibold">Game Browser</h1>
+        <p className="mt-2 text-base text-[var(--color-text-muted)]">
           Browse every game on the Epic Games Store. Data is fetched live from
           Epic's GraphQL endpoint.
         </p>
       </header>
 
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
         <input
-          className="input min-w-[16rem] flex-1"
+          className="input min-w-[18rem] flex-1"
           placeholder="Search by title…"
           value={keywords}
           onChange={(e) => setKeywords(e.target.value)}
@@ -78,7 +72,7 @@ export function BrowsePage() {
         <GameFilters state={filters} onChange={onFiltersChange} />
       </div>
 
-      <div className="mb-3 text-sm text-[var(--color-text-muted)]">
+      <div className="mb-4 text-base text-[var(--color-text-muted)]">
         {isLoading || isFetching
           ? "Loading…"
           : `Found games: ${total.toLocaleString()}`}
@@ -97,8 +91,8 @@ export function BrowsePage() {
         />
       )}
       {!isLoading && !error && cards.length > 0 && (
-        <div className="flex flex-col gap-4">
-          <GameGrid games={cards} onSelect={setSelected} />
+        <div className="flex flex-col gap-6">
+          <GameGrid games={cards} />
           <Pagination
             page={page}
             pageCount={pageCount}
@@ -108,8 +102,6 @@ export function BrowsePage() {
           />
         </div>
       )}
-
-      <GameDetailModal game={selected} onClose={() => setSelected(null)} />
     </div>
   );
 }

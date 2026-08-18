@@ -1,24 +1,26 @@
 import type { GameCardData } from "~/hooks/useGameSearch";
-import { GameCard } from "./GameCard";
+import { GameCard, CARD_MIN_WIDTH } from "./GameCard";
 
-/** Responsive grid of game cards. Uses CSS grid with auto-fill + min width. */
+/**
+ * Responsive grid of game cards. Auto-fills with the minimum card width,
+ * so it lays out 4 cards per row at ~1280px and gracefully degrades on
+ * narrower viewports.
+ */
 export function GameGrid({
   games,
-  onSelect,
 }: {
   games: GameCardData[];
-  onSelect: (game: GameCardData) => void;
 }) {
   if (games.length === 0) return null;
   return (
     <div
-      className="grid gap-4"
+      className="grid gap-6"
       style={{
-        gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))",
+        gridTemplateColumns: `repeat(auto-fill, minmax(${CARD_MIN_WIDTH}px, 1fr))`,
       }}
     >
       {games.map((g) => (
-        <GameCard key={g.id} game={g} onClick={onSelect} />
+        <GameCard key={g.id} game={g} />
       ))}
     </div>
   );

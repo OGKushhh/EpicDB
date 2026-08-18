@@ -6,6 +6,7 @@ import { Header, routes } from "~/components/Header";
 import { HomePage } from "~/pages/HomePage";
 import { ManifestPage } from "~/pages/ManifestPage";
 import { BrowsePage } from "~/pages/BrowsePage";
+import { GameOffersPage } from "~/pages/GameOffersPage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -39,6 +40,7 @@ const router = createBrowserRouter([
       { index: true, element: <HomePage /> },
       { path: "manifests", element: <ManifestPage /> },
       { path: "browse", element: <BrowsePage /> },
+      { path: "browse/:namespace", element: <GameOffersPage /> },
       // Legacy /graphql → /browse redirect.
       { path: "graphql", element: <Navigate to={routes.browse} replace /> },
     ],

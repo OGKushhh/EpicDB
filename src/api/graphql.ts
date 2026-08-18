@@ -217,3 +217,100 @@ interface SearchStoreData {
     };
   };
 }
+
+/**
+ * The `searchGameOffers` query — fetches ALL catalog offers for a single game
+ * namespace, plus the game's main info (title, description, keyImages, page slug).
+ * Mirrors the query used by the ScreamDB project's game-offers page.
+ */
+export const SEARCH_GAME_OFFERS_QUERY = /* GraphQL */ `
+query searchGameOffers($namespace: String!) {
+  Catalog {
+    catalogOffers(namespace: $namespace, params: { count: 1000 }) {
+      elements {
+        id
+        title
+        offerType
+        items {
+          id
+        }
+        keyImages {
+          type
+          url
+        }
+      }
+    }
+    searchStore(category: "games/edition/base", namespace: $namespace) {
+      elements {
+        id
+        title
+        description
+        namespace
+        keyImages {
+          type
+          url
+        }
+        catalogNs {
+          mappings(pageType: "productHome") {
+            pageSlug
+          }
+        }
+      }
+    }
+  }
+}
+`;
+
+export interface OfferItem {
+  id: string;
+}
+
+export interface OfferElement {
+  id: string;
+  title: string;
+  offerType: string;
+  items: OfferItem[];
+  keyImages?: Array<{ type: string; url: string }>;
+}
+
+export interface GameInfo {
+  id: string;
+  title: string;
+  description: string | null;
+  namespace: string;
+  keyImages?: Array<{ type: string; url: string }>;
+  catalogNs?: {
+    mappings?: Array<{ pageSlug: string }>;
+  };
+}
+
+export interface GameOffersResult {
+  game: GameInfo | null;
+  offers: OfferElement[];
+}
+
+/** Run searchGameOffers — returns the game info + all its catalog offers. */
+export async function searchGameOffers(namespace: string): Promise<GameOffersResult> {
+  const response = await executeGraphQL<SearchGameOffersData>(
+    SEARCH_GAME_OFFERS_QUERY,
+    { namespace }
+  );
+  if (response.errors?.length) {
+    throw new GraphQLClientError(
+      0,
+      response.errors.map((e) => e.message).join("; "),
+      response.errors
+    );
+  }
+  const cat = response.data?.Catalog;
+  const offers = cat?.catalogOffers?.elements ?? [];
+  const game = cat?.searchStore?.elements?.[0] ?? null;
+  return { game, offers };
+}
+
+interface SearchGameOffersData {
+  Catalog?: {
+    catalogOffers?: { elements?: OfferElement[] };
+    searchStore?: { elements?: GameInfo[] };
+  };
+}
