@@ -186,22 +186,3 @@ To deploy:
 | `pnpm lint` | Run ESLint across the repo |
 | `pnpm format` | Prettier check |
 | `pnpm format:fix` | Prettier write |
-
-## 🧪 Acceptance checklist
-
-- [x] Vite builds successfully (`pnpm build`).
-- [x] Manifest page shows game titles from `/titles`.
-- [x] Manifest page uses `effective_id` for display and `/info` + `/download` URL paths.
-- [x] GraphQL browser works with saved queries and history (localStorage).
-- [x] Both pages are reachable from the navigation tabs in the header.
-- [x] Environment variables are read via `import.meta.env.VITE_*`.
-- [x] `X-API-Key` header is sent on every manifest call except `/download`.
-- [x] No `REACT_APP_*` references remain (the project is Vite-based).
-- [x] No `ScreamDB` / `Scream` / `scream` references remain in `src/` or config files.
-
-## 📄 License
-
-This software is licensed under [The Unlicense], terms of which are
-available in [UNLICENSE.txt](./UNLICENSE.txt).
-
-[The Unlicense]: https://unlicense.org/
