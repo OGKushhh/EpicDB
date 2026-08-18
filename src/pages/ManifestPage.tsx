@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useTitles } from "~/hooks/useManifests";
 import type { ManifestTitleEntry, ManifestTitleGroup } from "~/types/manifest";
 import { ErrorBlock, GameGridSkeleton, EmptyState } from "~/components/Loading";
@@ -6,16 +6,27 @@ import { GameSearch, useFilteredGames } from "~/components/Manifest/GameSearch";
 import { GameStats } from "~/components/Manifest/GameStats";
 import { GameList } from "~/components/Manifest/GameList";
 import { GameDetail } from "~/components/Manifest/GameDetail";
+import { Pagination } from "~/components/Pagination";
+
+/** Entries per page in the manifest table. */
+const PAGE_SIZE = 25;
+
+/** A flattened entry paired with its parent group for easy pagination. */
+interface FlatEntry {
+  entry: ManifestTitleEntry;
+  group: ManifestTitleGroup;
+}
 
 /**
  * Manifest Browser page — lists all games from the /titles endpoint, lets the
- * user search/filter (client-side), and shows full metadata when an entry is
- * selected. Uses `effective_id` from each entry for both display and the
- * /info + /download URLs (never the raw `build_id`).
+ * user search/filter (client-side), paginates the entries, and shows full
+ * metadata when an entry is selected. Uses `effective_id` from each entry for
+ * both display and the /info + /download URLs (never the raw `build_id`).
  */
 export function ManifestPage() {
   const { data, isLoading, error, refetch } = useTitles();
   const [query, setQuery] = useState("");
+  const [page, setPage] = useState(0);
   const [selected, setSelected] =
     useState<{ group: ManifestTitleGroup; entry: ManifestTitleEntry } | null>(null);
 
@@ -27,6 +38,28 @@ export function ManifestPage() {
     []
   );
   const filtered = useFilteredGames(data?.games ?? [], query, haystackFn);
+
+  // Flatten filtered groups into a single list of {entry, group} for pagination.
+  const flatEntries = useMemo<FlatEntry[]>(
+    () =>
+      filtered.flatMap((group) =>
+        group.entries.map((entry) => ({ entry, group }))
+      ),
+    [filtered]
+  );
+
+  const pageCount = Math.max(1, Math.ceil(flatEntries.length / PAGE_SIZE));
+  const safePage = Math.min(page, pageCount - 1);
+  const pageEntries = useMemo(
+    () => flatEntries.slice(safePage * PAGE_SIZE, (safePage + 1) * PAGE_SIZE),
+    [flatEntries, safePage]
+  );
+
+  // Reset to first page when the search query changes.
+  const onQueryChange = useCallback((q: string) => {
+    setQuery(q);
+    setPage(0);
+  }, []);
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-4">
@@ -49,16 +82,16 @@ export function ManifestPage() {
       <GameStats />
 
       <div className="mt-4 mb-3 flex items-center justify-between gap-3">
-        <GameSearch value={query} onChange={setQuery} />
+        <GameSearch value={query} onChange={onQueryChange} />
         <div className="text-xs text-[var(--color-text-muted)]">
           {filtered.length} of {data?.games.length ?? 0} games ·{" "}
-          {totalEntries(filtered)} entries
+          {flatEntries.length} entries
         </div>
       </div>
 
       {isLoading && <GameGridSkeleton count={6} />}
       {error && <ErrorBlock message={(error as Error).message} />}
-      {!isLoading && !error && filtered.length === 0 && (
+      {!isLoading && !error && flatEntries.length === 0 && (
         <EmptyState
           title="No manifests found"
           hint={
@@ -69,22 +102,29 @@ export function ManifestPage() {
         />
       )}
 
-      {!isLoading && !error && filtered.length > 0 && (
+      {!isLoading && !error && flatEntries.length > 0 && (
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_22rem]">
-          <GameList
-            groups={filtered}
-            onSelect={(entry, group) => setSelected({ group, entry })}
-            selected={
-              selected ? { appName: selected.group.app_name, effectiveId: selected.entry.effective_id } : null
-            }
-          />
+          <div className="flex flex-col gap-3">
+            <GameList
+              entries={pageEntries}
+              onSelect={(entry, group) => setSelected({ group, entry })}
+              selected={
+                selected
+                  ? { appName: selected.group.app_name, effectiveId: selected.entry.effective_id }
+                  : null
+              }
+            />
+            <Pagination
+              page={safePage}
+              pageCount={pageCount}
+              total={flatEntries.length}
+              pageSize={PAGE_SIZE}
+              onChange={setPage}
+            />
+          </div>
           {selected && <GameDetail group={selected.group} entry={selected.entry} />}
         </div>
       )}
     </div>
   );
-}
-
-function totalEntries(groups: ManifestTitleGroup[]): number {
-  return groups.reduce((sum, g) => sum + g.entry_count, 0);
 }

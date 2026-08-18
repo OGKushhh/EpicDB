@@ -1,5 +1,5 @@
 /**
- * Type definitions for the Epic Games GraphQL API used by the GraphQL Browser.
+ * Type definitions for the Epic Games GraphQL API used by the Browse page.
  *
  * The Epic Games launcher uses a GraphQL endpoint at
  * https://graphql.epicgames.com/ue/graphql. Browsers cannot call this endpoint
@@ -30,22 +30,4 @@ export interface GraphQLResponse<TData = unknown> {
   data?: TData;
   errors?: GraphQLError[];
   extensions?: Record<string, unknown>;
-}
-
-/** A persisted query in localStorage. */
-export interface SavedQuery {
-  id: string;
-  name: string;
-  query: string;
-  variables: string;
-  createdAt: string;
-}
-
-/** An entry in the recent-query history. */
-export interface QueryHistoryEntry {
-  id: string;
-  query: string;
-  variables: string;
-  ranAt: string;
-  ok: boolean;
 }

@@ -7,7 +7,15 @@ pinned: false
 
 # EpicDB
 
-A browser for Epic Games manifests and GraphQL data.
+Browse the Epic-Unlocker manifest archive and the full Epic Games Store catalog in one place.
+
+## Pages
+
+| Page | What it does |
+|---|---|
+| **Home** (`/`) | Intro + links to the two browsers. |
+| **Manifest** (`/manifests`) | Search + paginate the uploaded manifest archive. Click any entry for full metadata + download. |
+| **Browse** (`/browse`) | Grid of every game on the Epic Games Store (live from Epic's GraphQL). Sort, search, click a card for Item ID + store links. |
 
 ## Quick start
 

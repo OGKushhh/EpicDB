@@ -107,3 +107,113 @@ export async function executeGraphQL<TData = unknown>(
 
   return payload ?? { data: undefined, errors: undefined };
 }
+
+/**
+ * The `searchStore` GraphQL query — fetches a page of games from the Epic
+ * Games Store catalog. Mirrors the query used by the ScreamDB project.
+ *
+ * Variables:
+ *   - count:    page size (Epic caps at 1000)
+ *   - keywords: free-text search query ("" returns all games)
+ *   - sortBy:   "relevancy" | "title" | "creationDate" | "releaseDate" |
+ *               "pcReleaseDate" | "currentPrice"
+ *   - sortDir:  "ASC" | "DESC"
+ *   - start:    0-indexed offset (start = count * page)
+ */
+export const SEARCH_STORE_QUERY = /* GraphQL */ `
+query searchStore($count: Int!, $keywords: String!, $sortBy: String, $sortDir: String, $start: Int) {
+  Catalog {
+    searchStore(
+      category: "games/edition/base"
+      count: $count
+      keywords: $keywords
+      sortBy: $sortBy
+      sortDir: $sortDir
+      start: $start
+    ) {
+      elements {
+        id
+        title
+        namespace
+        creationDate
+        releaseDate
+        keyImages {
+          type
+          url
+        }
+        items {
+          id
+          namespace
+        }
+      }
+      paging {
+        total
+      }
+    }
+  }
+}
+`;
+
+/** Image types we look for when picking a card thumbnail. */
+export const KEY_IMAGE_TYPES = {
+  OFFER_IMAGE_TALL: "OfferImageTall",
+  OFFER_IMAGE_WIDE: "OfferImageWide",
+  DELL_IMAGE: "DellImage",
+  THUMBNAIL: "Thumbnail",
+} as const;
+
+/** Run the searchStore query and return the parsed response. */
+export async function searchStore(args: {
+  keywords: string;
+  count: number;
+  start: number;
+  sortBy?: string;
+  sortDir?: string;
+}): Promise<SearchStoreResult> {
+  const response = await executeGraphQL<SearchStoreData>(SEARCH_STORE_QUERY, {
+    count: args.count,
+    keywords: args.keywords,
+    sortBy: args.sortBy,
+    sortDir: args.sortDir,
+    start: args.start,
+  });
+  if (response.errors?.length) {
+    throw new GraphQLClientError(
+      0,
+      response.errors.map((e) => e.message).join("; "),
+      response.errors
+    );
+  }
+  const searchStore = response.data?.Catalog?.searchStore;
+  if (!searchStore) {
+    throw new GraphQLClientError(0, "No searchStore data in response");
+  }
+  return {
+    elements: searchStore.elements ?? [],
+    total: searchStore.paging?.total ?? 0,
+  };
+}
+
+export interface SearchStoreElement {
+  id: string;
+  title: string;
+  namespace: string;
+  creationDate: string;
+  releaseDate?: string | null;
+  keyImages?: Array<{ type: string; url: string }>;
+  items?: Array<{ id: string; namespace: string }>;
+}
+
+export interface SearchStoreResult {
+  elements: SearchStoreElement[];
+  total: number;
+}
+
+interface SearchStoreData {
+  Catalog?: {
+    searchStore?: {
+      elements?: SearchStoreElement[];
+      paging?: { total: number };
+    };
+  };
+}

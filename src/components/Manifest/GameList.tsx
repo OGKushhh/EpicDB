@@ -63,17 +63,26 @@ function EntryRow({
   );
 }
 
-/** The full game list table — receives already-filtered groups. */
+/** A flattened entry paired with its parent group — used for paginated rows. */
+export interface FlatEntry {
+  entry: ManifestTitleEntry;
+  group: ManifestTitleGroup;
+}
+
+/**
+ * The manifest table — takes a flat list of {entry, group} pairs (already
+ * paginated by the caller). Renders one row per entry, with click-to-select.
+ */
 export function GameList({
-  groups,
+  entries,
   onSelect,
   selected,
 }: {
-  groups: ManifestTitleGroup[];
+  entries: FlatEntry[];
   onSelect: (entry: ManifestTitleEntry, group: ManifestTitleGroup) => void;
   selected: { appName: string; effectiveId: string } | null;
 }) {
-  if (groups.length === 0) {
+  if (entries.length === 0) {
     return (
       <div className="card text-center py-8 text-[var(--color-text-muted)]">
         No manifests match your search.
@@ -93,20 +102,18 @@ export function GameList({
           </tr>
         </thead>
         <tbody>
-          {groups.map((g) =>
-            g.entries.map((entry, i) => (
-              <EntryRow
-                key={`${g.app_name}-${entry.effective_id}-${i}`}
-                entry={entry}
-                appName={g.app_name}
-                onSelect={(e) => onSelect(e, g)}
-                selected={
-                  selected?.appName === g.app_name &&
-                  selected?.effectiveId === entry.effective_id
-                }
-              />
-            ))
-          )}
+          {entries.map(({ entry, group }) => (
+            <EntryRow
+              key={`${group.app_name}-${entry.effective_id}`}
+              entry={entry}
+              appName={group.app_name}
+              onSelect={(e) => onSelect(e, group)}
+              selected={
+                selected?.appName === group.app_name &&
+                selected?.effectiveId === entry.effective_id
+              }
+            />
+          ))}
         </tbody>
       </table>
     </div>

@@ -4,12 +4,13 @@ import { Link, useLocation } from "react-router";
 export const routes = {
   home: "/",
   manifests: "/manifests",
-  graphql: "/graphql",
+  browse: "/browse",
 } as const;
 
 const TABS: Array<{ to: string; label: string; pattern: string }> = [
+  { to: routes.home, label: "Home", pattern: routes.home },
   { to: routes.manifests, label: "Manifest", pattern: routes.manifests },
-  { to: routes.graphql, label: "GraphQL", pattern: routes.graphql },
+  { to: routes.browse, label: "Browse", pattern: routes.browse },
 ];
 
 export function Header() {
@@ -26,7 +27,10 @@ export function Header() {
 
         <nav className="flex items-center gap-1">
           {TABS.map((tab) => {
-            const active = location.pathname.startsWith(tab.pattern);
+            const active =
+              tab.pattern === routes.home
+                ? location.pathname === routes.home
+                : location.pathname.startsWith(tab.pattern);
             return (
               <Link
                 key={tab.to}

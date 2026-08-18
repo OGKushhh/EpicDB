@@ -3,8 +3,9 @@ import { createBrowserRouter, Navigate, RouterProvider, Outlet } from "react-rou
 import { ErrorBoundary } from "~/components/ErrorBoundary";
 import { Footer } from "~/components/Footer";
 import { Header, routes } from "~/components/Header";
+import { HomePage } from "~/pages/HomePage";
 import { ManifestPage } from "~/pages/ManifestPage";
-import { GraphQLPage } from "~/pages/GraphQLPage";
+import { BrowsePage } from "~/pages/BrowsePage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -35,9 +36,11 @@ const router = createBrowserRouter([
     path: routes.home,
     element: <Layout />,
     children: [
-      { index: true, element: <Navigate to={routes.manifests} replace /> },
+      { index: true, element: <HomePage /> },
       { path: "manifests", element: <ManifestPage /> },
-      { path: "graphql", element: <GraphQLPage /> },
+      { path: "browse", element: <BrowsePage /> },
+      // Legacy /graphql → /browse redirect.
+      { path: "graphql", element: <Navigate to={routes.browse} replace /> },
     ],
   },
   { path: "*", element: <Navigate to={routes.home} replace /> },

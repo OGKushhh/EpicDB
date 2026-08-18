@@ -18,15 +18,23 @@ export function GameDetail({
   return (
     <div className="card flex flex-col gap-3">
       <div className="flex items-start justify-between gap-3">
-        <div>
+        <div className="min-w-0 flex-1">
           <div className="text-xs uppercase tracking-wide text-[var(--color-text-muted)]">
             {group.display_name || group.app_name}
           </div>
           <h2 className="text-lg font-semibold mono break-all">
             {entry.effective_id}
           </h2>
-          <div className="mt-1 text-xs text-[var(--color-text-muted)] mono">
-            info URL: <span className="break-all">{buildInfoUrl(group.app_name, entry.effective_id)}</span>
+          <div className="mt-1 text-xs text-[var(--color-text-muted)] mono truncate">
+            <a
+              href={buildInfoUrl(group.app_name, entry.effective_id)}
+              target="_blank"
+              rel="noreferrer noopener"
+              className="text-[var(--color-accent)] hover:underline"
+              title={buildInfoUrl(group.app_name, entry.effective_id)}
+            >
+              {buildInfoUrl(group.app_name, entry.effective_id)}
+            </a>
           </div>
         </div>
         <DownloadButton
