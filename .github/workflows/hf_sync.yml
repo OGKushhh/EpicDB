@@ -23,13 +23,18 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Build project (Vite)
+      - name: Build project
         run: npm run build
 
-      - name: Sync to Hugging Face Space
-        uses: huggingface/hub-sync@v0.1.0
-        with:
-          github_repo_id: ${{ github.repository }}
-          huggingface_repo_id: OGKushhh/EpicDB
-          hf_token: ${{ secrets.HF_TOKEN }}
-          space_sdk: static  # ← THIS TELLS HF IT'S A STATIC SPACE
+      - name: Deploy to Hugging Face Space
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          cd dist
+          git init
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git remote add space https://OGKushhh:$HF_TOKEN@huggingface.co/spaces/OGKushhh/EpicDB
+          git add .
+          git commit -m "Deploy from GitHub Actions"
+          git push --force space main
