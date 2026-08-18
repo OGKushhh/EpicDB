@@ -32,4 +32,4 @@ jobs:
           github_repo_id: ${{ github.repository }}
           huggingface_repo_id: OGKushhh/EpicDB
           hf_token: ${{ secrets.HF_TOKEN }}
-          path: dist
+          space_sdk: static  # ← THIS TELLS HF IT'S A STATIC SPACE
