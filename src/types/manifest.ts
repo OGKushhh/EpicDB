@@ -22,6 +22,8 @@ export interface ManifestTitleEntry {
   file_type: "binary" | "json";
   /** BuildVersion from the manifest. */
   build_version: string;
+  /** AppVersionString — fallback for matching when build_version is empty. */
+  app_version_string: string | null;
   /** ISO-8601 UTC upload timestamp. */
   uploaded_at: string;
   /** Relative storage path under /data/manifests/. */
@@ -85,24 +87,13 @@ export interface ManifestApiError {
 }
 
 /**
- * Heuristic: detect whether an entry's effective_id is a SHA1 fallback
- * (i.e. the original build_id was empty/"unknown" — old binary manifest with
- * DataVersion 0). The backend's fallback is 40-char SHA1 hex; modern
- * InstallationGuid is 22 chars; BuildVersion is a free-form string.
- *
- * Use this to decide whether to render the "SHA1 fallback — old binary manifest"
- * badge in the UI.
- */
-/**
  * Two-tier related manifest finder.
  *
  * Given an entry and its parent group, returns entries with a DIFFERENT
  * file_type split into two tiers:
- *   - Tier 1 (counterparts): same build_version (exact match).
- *   - Tier 2 (other versions): different build_version or empty.
- *
- * Tier 1 is the strong signal — the JSON and binary for the same build.
- * Tier 2 catches entries that share only app_name.
+ *   - Tier 1 (counterparts): same version string (matched via
+ *     build_version || app_version_string).
+ *   - Tier 2 (other versions): same app_name but no version match.
  */
 export function findRelated(
   entry: ManifestTitleEntry,
@@ -111,8 +102,12 @@ export function findRelated(
   const oppositeType = group.entries.filter(
     (e) => e.effective_id !== entry.effective_id && e.file_type !== entry.file_type
   );
+  const matchKey = entry.build_version || entry.app_version_string || "";
   const tier1 = oppositeType.filter(
-    (e) => e.build_version !== "" && e.build_version === entry.build_version
+    (e) => {
+      const theirKey = e.build_version || e.app_version_string || "";
+      return matchKey !== "" && matchKey === theirKey;
+    }
   );
   const tier1Ids = new Set(tier1.map((e) => e.effective_id));
   const tier2 = oppositeType.filter((e) => !tier1Ids.has(e.effective_id));
