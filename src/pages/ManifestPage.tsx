@@ -186,7 +186,13 @@ export function ManifestPage() {
         title={selected ? selected.entry.effective_id : ""}
         subtitle={selected ? selected.group.display_name || selected.group.app_name : "Details"}
       >
-        {selected && <GameDetail group={selected.group} entry={selected.entry} />}
+        {selected && (
+          <GameDetail
+            group={selected.group}
+            entry={selected.entry}
+            onViewEntry={(e, g) => setSelected({ group: g, entry: e })}
+          />
+        )}
       </SlideOver>
     </div>
   );

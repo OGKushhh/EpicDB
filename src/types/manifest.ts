@@ -93,6 +93,41 @@ export interface ManifestApiError {
  * Use this to decide whether to render the "SHA1 fallback — old binary manifest"
  * badge in the UI.
  */
+/**
+ * Two-tier related manifest finder.
+ *
+ * Given an entry and its parent group, returns entries with a DIFFERENT
+ * file_type split into two tiers:
+ *   - Tier 1 (counterparts): same build_version (exact match).
+ *   - Tier 2 (other versions): different build_version or empty.
+ *
+ * Tier 1 is the strong signal — the JSON and binary for the same build.
+ * Tier 2 catches entries that share only app_name.
+ */
+export function findRelated(
+  entry: ManifestTitleEntry,
+  group: ManifestTitleGroup
+): { tier1: ManifestTitleEntry[]; tier2: ManifestTitleEntry[] } {
+  const oppositeType = group.entries.filter(
+    (e) => e.effective_id !== entry.effective_id && e.file_type !== entry.file_type
+  );
+  const tier1 = oppositeType.filter(
+    (e) => e.build_version !== "" && e.build_version === entry.build_version
+  );
+  const tier1Ids = new Set(tier1.map((e) => e.effective_id));
+  const tier2 = oppositeType.filter((e) => !tier1Ids.has(e.effective_id));
+  return { tier1, tier2 };
+}
+
+/**
+ * Heuristic: detect whether an entry's effective_id is a SHA1 fallback
+ * (i.e. the original build_id was empty/"unknown" — old binary manifest with
+ * DataVersion 0). The backend's fallback is 40-char SHA1 hex; modern
+ * InstallationGuid is 22 chars; BuildVersion is a free-form string.
+ *
+ * Use this to decide whether to render the "SHA1 fallback — old binary manifest"
+ * badge in the UI.
+ */
 export function isSha1Fallback(entry: {
   build_id: string;
   fallback_build_id: string;
