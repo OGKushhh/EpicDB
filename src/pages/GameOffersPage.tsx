@@ -1,9 +1,15 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams, Link } from "react-router";
 import { useGameOffers, pickOfferImageUrl } from "~/hooks/useGameOffers";
 import type { OfferElement, GameInfo } from "~/api/graphql";
 import { routes } from "~/components/Header";
 import { ErrorBlock, LoadingFallback, EmptyState } from "~/components/Loading";
+import { Pagination } from "~/components/Pagination";
+
+/** Below this many offers, we don't bother showing pagination — just render
+ *  all rows. Above the threshold, paginate (10 per page). */
+const OFFERS_PAGINATION_THRESHOLD = 10;
+const OFFERS_PAGE_SIZE = 10;
 
 /**
  * Game detail page — standalone route at /browse/:namespace. Mirrors the
@@ -131,10 +137,16 @@ function pickBannerUrl(
   return keyImages[0].url;
 }
 
-/** Offers table with search + offer-type filter. */
+/** Offers table with search + offer-type filter + pagination when above threshold. */
 function OffersTable({ offers }: { offers: OfferElement[] }) {
   const [search, setSearch] = useState("");
   const [offerType, setOfferType] = useState<string>("");
+  const [page, setPage] = useState(0);
+
+  // Reset to first page when search/filter changes.
+  useEffect(() => {
+    setPage(0);
+  }, [search, offerType]);
 
   // Unique offer types for the filter dropdown.
   const offerTypes = useMemo(() => {
@@ -155,6 +167,16 @@ function OffersTable({ offers }: { offers: OfferElement[] }) {
       );
     });
   }, [offers, search, offerType]);
+
+  // Only paginate when the filtered set crosses the threshold.
+  const usePagination = filtered.length > OFFERS_PAGINATION_THRESHOLD;
+  const pageCount = usePagination
+    ? Math.max(1, Math.ceil(filtered.length / OFFERS_PAGE_SIZE))
+    : 1;
+  const safePage = Math.min(page, pageCount - 1);
+  const paged = usePagination
+    ? filtered.slice(safePage * OFFERS_PAGE_SIZE, (safePage + 1) * OFFERS_PAGE_SIZE)
+    : filtered;
 
   return (
     <div>
@@ -193,66 +215,80 @@ function OffersTable({ offers }: { offers: OfferElement[] }) {
       {filtered.length === 0 ? (
         <EmptyState title="No offers found" hint="Try a different search or filter." />
       ) : (
-        <div className="card !p-0 overflow-x-auto">
-          <table className="w-full min-w-[640px] text-left">
-            <thead className="bg-[var(--color-base-3)] text-xs uppercase tracking-wide text-[var(--color-text-muted)]">
-              <tr>
-                <th className="px-4 py-3 font-semibold">Image</th>
-                <th className="px-4 py-3 font-semibold">Item ID</th>
-                <th className="px-4 py-3 font-semibold">Title</th>
-                <th className="px-4 py-3 font-semibold">Offer type</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((o) => {
-                const imageUrl = pickOfferImageUrl(o.keyImages);
-                const itemIds = o.items.map((i) => i.id);
-                return (
-                  <tr
-                    key={o.id}
-                    className="border-b border-white/5 transition-colors hover:bg-white/5"
-                  >
-                    <td className="px-4 py-3 align-top">
-                      <div className="h-16 w-16 overflow-hidden rounded border border-white/10 bg-[var(--color-base-3)]">
-                        {imageUrl ? (
-                          <img
-                            src={imageUrl}
-                            alt={o.title}
-                            loading="lazy"
-                            className="h-full w-full object-cover"
-                          />
-                        ) : (
-                          <div className="flex h-full w-full items-center justify-center text-[10px] text-[var(--color-text-muted)]">
-                            —
-                          </div>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 align-top">
-                      <div className="space-y-1">
-                        {itemIds.length === 0 ? (
-                          <span className="text-xs text-[var(--color-text-muted)]">—</span>
-                        ) : (
-                          itemIds.map((id) => (
-                            <div key={id} className="mono text-xs break-all">
-                              {id}
+        <>
+          <div className="card !p-0 overflow-x-auto">
+            <table className="w-full min-w-[640px] text-left">
+              <thead className="bg-[var(--color-base-3)] text-xs uppercase tracking-wide text-[var(--color-text-muted)]">
+                <tr>
+                  <th className="px-4 py-3 font-semibold">Image</th>
+                  <th className="px-4 py-3 font-semibold">Item ID</th>
+                  <th className="px-4 py-3 font-semibold">Title</th>
+                  <th className="px-4 py-3 font-semibold">Offer type</th>
+                </tr>
+              </thead>
+              <tbody>
+                {paged.map((o) => {
+                  const imageUrl = pickOfferImageUrl(o.keyImages);
+                  const itemIds = o.items.map((i) => i.id);
+                  return (
+                    <tr
+                      key={o.id}
+                      className="border-b border-white/5 transition-colors hover:bg-white/5"
+                    >
+                      <td className="px-4 py-3 align-top">
+                        <div className="h-16 w-16 overflow-hidden rounded border border-white/10 bg-[var(--color-base-3)]">
+                          {imageUrl ? (
+                            <img
+                              src={imageUrl}
+                              alt={o.title}
+                              loading="lazy"
+                              className="h-full w-full object-cover"
+                            />
+                          ) : (
+                            <div className="flex h-full w-full items-center justify-center text-[10px] text-[var(--color-text-muted)]">
+                              —
                             </div>
-                          ))
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 align-top text-sm">{o.title}</td>
-                    <td className="px-4 py-3 align-top">
-                      <span className="badge bg-[var(--color-accent-blue)]/15 text-[var(--color-accent-blue)]">
-                        {o.offerType || "—"}
-                      </span>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 align-top">
+                        <div className="space-y-1">
+                          {itemIds.length === 0 ? (
+                            <span className="text-xs text-[var(--color-text-muted)]">—</span>
+                          ) : (
+                            itemIds.map((id) => (
+                              <div key={id} className="mono text-xs break-all">
+                                {id}
+                              </div>
+                            ))
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 align-top text-sm">{o.title}</td>
+                      <td className="px-4 py-3 align-top">
+                        <span className="badge bg-[var(--color-accent-blue)]/15 text-[var(--color-accent-blue)]">
+                          {o.offerType || "—"}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {usePagination && (
+            <div className="mt-4">
+              <Pagination
+                page={safePage}
+                pageCount={pageCount}
+                total={filtered.length}
+                pageSize={OFFERS_PAGE_SIZE}
+                onChange={setPage}
+              />
+            </div>
+          )}
+        </>
       )}
 
       <div className="mt-4">

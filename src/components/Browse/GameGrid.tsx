@@ -14,7 +14,7 @@ export function GameGrid({
   if (games.length === 0) return null;
   return (
     <div
-      className="grid gap-6"
+      className="grid gap-4"
       style={{
         gridTemplateColumns: `repeat(auto-fill, minmax(${CARD_MIN_WIDTH}px, 1fr))`,
       }}

@@ -17,8 +17,8 @@ const TABS: Array<{ to: string; label: string; pattern: string }> = [
 export function Header() {
   const location = useLocation();
   return (
-    <header className="sticky top-0 z-20 border-b border-black/30 bg-[var(--color-header-bg)]">
-      <div className="mx-auto flex h-20 max-w-7xl items-center gap-8 px-6">
+    <header className="sticky top-0 z-20 border-b border-black/15 bg-[var(--color-header-bg)]">
+      <div className="mx-auto flex h-16 max-w-7xl items-center gap-8 px-6">
         {/* Merged logo: single box showing "EpicDB" with light-blue bg + white text. */}
         <Link
           to={routes.home}
@@ -39,8 +39,8 @@ export function Header() {
                 to={tab.to}
                 className={`rounded-md px-5 py-2.5 text-base font-medium transition-colors ${
                   active
-                    ? "bg-white/15 text-[var(--color-text)]"
-                    : "text-[var(--color-text-muted)] hover:bg-white/5 hover:text-[var(--color-text)]"
+                    ? "bg-black/10 text-[var(--color-header-fg)]"
+                    : "text-[var(--color-header-fg-muted)] hover:bg-black/5 hover:text-[var(--color-header-fg)]"
                 }`}
               >
                 {tab.label}
@@ -49,12 +49,12 @@ export function Header() {
           })}
         </nav>
 
-        <div className="ml-auto flex items-center gap-4 text-base text-[var(--color-text-muted)]">
+        <div className="ml-auto flex items-center gap-4 text-base text-[var(--color-header-fg-muted)]">
           <a
             href="https://github.com/acidicoala/EpicDB#readme"
             target="_blank"
             rel="noreferrer noopener"
-            className="hover:text-[var(--color-text)]"
+            className="hover:text-[var(--color-header-fg)]"
           >
             GitHub
           </a>

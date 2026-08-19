@@ -4,8 +4,16 @@ import type { ManifestTitleEntry, ManifestTitleGroup } from "~/types/manifest";
 import { DownloadButton } from "./DownloadButton";
 import { ErrorBlock, LoadingFallback } from "~/components/Loading";
 import { JsonViewer } from "~/components/JsonViewer";
+import { formatBytes, formatDateTime } from "~/utils/format";
 
-/** Right-side detail panel — fetches /info for the selected entry. */
+/**
+ * Detail body — fetches /info for the selected entry and renders the metadata
+ * grouped into sections: Build Info, Hashes & Storage, Custom Fields.
+ *
+ * This component renders only the *body* of the slide-over panel — the header
+ * (with the close button) is provided by the SlideOver wrapper. The download
+ * button is also placed at the top of the body for prominence.
+ */
 export function GameDetail({
   group,
   entry,
@@ -16,62 +24,112 @@ export function GameDetail({
   const { data, isLoading, error } = useInfo(group.app_name, entry.effective_id);
 
   return (
-    <div className="card flex flex-col gap-3">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0 flex-1">
-          <div className="text-xs uppercase tracking-wide text-[var(--color-text-muted)]">
-            {group.display_name || group.app_name}
-          </div>
-          <h2 className="text-lg font-semibold mono break-all">
-            {entry.effective_id}
-          </h2>
-          <div className="mt-1 text-xs text-[var(--color-text-muted)] mono truncate">
-            <a
-              href={buildInfoUrl(group.app_name, entry.effective_id)}
-              target="_blank"
-              rel="noreferrer noopener"
-              className="text-[var(--color-accent)] hover:underline"
-              title={buildInfoUrl(group.app_name, entry.effective_id)}
-            >
-              {buildInfoUrl(group.app_name, entry.effective_id)}
-            </a>
-          </div>
+    <div className="flex flex-col gap-4">
+      {/* Top: title + info link + download */}
+      <div>
+        <div className="text-xs uppercase tracking-wide text-[var(--color-text-muted)]">
+          {group.display_name || group.app_name}
         </div>
-        <DownloadButton
-          appName={group.app_name}
-          effectiveId={entry.effective_id}
-          fileName={data?.original_filename}
-        />
+        <h3 className="mt-0.5 text-base font-semibold mono break-all">
+          {entry.effective_id}
+        </h3>
+        <div className="mt-2">
+          <DownloadButton
+            appName={group.app_name}
+            effectiveId={entry.effective_id}
+            fileName={data?.original_filename}
+          />
+        </div>
+        <div className="mt-2 text-xs text-[var(--color-text-muted)] mono">
+          <a
+            href={buildInfoUrl(group.app_name, entry.effective_id)}
+            target="_blank"
+            rel="noreferrer noopener"
+            className="text-[var(--color-accent-blue)] hover:underline"
+            title={buildInfoUrl(group.app_name, entry.effective_id)}
+          >
+            ↗ raw /info endpoint
+          </a>
+        </div>
       </div>
 
       {isLoading && <LoadingFallback label="Fetching metadata…" />}
       {error && <ErrorBlock message={(error as Error).message} />}
-      {data && (
-        <div className="grid grid-cols-2 gap-2 border-t border-white/10 pt-3 text-sm sm:grid-cols-3">
-          <Detail label="app_name" value={data.app_name} />
-          <Detail label="app_id" value={String(data.app_id)} />
-          <Detail label="file_type" value={data.file_type} />
-          <Detail label="build_version" value={data.build_version} />
-          <Detail label="app_version_string" value={data.app_version_string ?? "—"} />
-          <Detail label="data_version" value={String(data.data_version)} />
-          <Detail label="feature_level" value={String(data.feature_level)} />
-          <Detail label="file_size" value={formatBytes(data.file_size)} />
-          <Detail label="uploaded_at" value={formatTime(data.uploaded_at)} />
-          <Detail label="sha256" value={data.sha256} mono />
-          <Detail label="header_sha_hash" value={data.header_sha_hash || "—"} mono />
-          <Detail label="storage_path" value={data.storage_path} mono />
-        </div>
-      )}
 
-      {data?.custom_fields && Object.keys(data.custom_fields).length > 0 && (
-        <div className="border-t border-white/10 pt-3">
-          <div className="mb-1 text-xs uppercase tracking-wide text-[var(--color-text-muted)]">
-            custom_fields
-          </div>
-          <JsonViewer data={data.custom_fields} defaultExpandedDepth={2} />
-        </div>
+      {data && (
+        <>
+          <Section title="Build info">
+            <Detail label="app_name" value={data.app_name} mono />
+            <Detail label="app_id" value={String(data.app_id)} mono />
+            <Detail
+              label="file_type"
+              value={data.file_type}
+              badge={{ tone: data.file_type === "json" ? "blue" : "green" }}
+            />
+            <Detail label="build_version" value={data.build_version || "—"} mono />
+            <Detail
+              label="app_version_string"
+              value={data.app_version_string ?? "—"}
+            />
+            <Detail
+              label="data_version"
+              value={String(data.data_version)}
+              mono
+            />
+            <Detail
+              label="feature_level"
+              value={String(data.feature_level)}
+              mono
+            />
+            <Detail label="file_size" value={formatBytes(data.file_size)} />
+            <Detail
+              label="uploaded_at"
+              value={formatDateTime(data.uploaded_at)}
+            />
+            <Detail
+              label="original_filename"
+              value={data.original_filename || "—"}
+              mono
+            />
+          </Section>
+
+          <Section title="Hashes & storage">
+            <Detail label="sha256" value={data.sha256} mono />
+            <Detail
+              label="header_sha_hash"
+              value={data.header_sha_hash || "—"}
+              mono
+            />
+            <Detail label="storage_path" value={data.storage_path} mono />
+          </Section>
+
+          {data.custom_fields &&
+            Object.keys(data.custom_fields).length > 0 && (
+              <Section title="Custom fields">
+                <JsonViewer data={data.custom_fields} defaultExpandedDepth={2} />
+              </Section>
+            )}
+        </>
       )}
     </div>
+  );
+}
+
+/** A titled block of metadata rows. */
+function Section({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="border-t border-white/10 pt-3">
+      <h4 className="mb-2 text-xs uppercase tracking-wide text-[var(--color-text-muted)]">
+        {title}
+      </h4>
+      <div className="grid grid-cols-1 gap-y-2 sm:grid-cols-2">{children}</div>
+    </section>
   );
 }
 
@@ -79,32 +137,37 @@ function Detail({
   label,
   value,
   mono,
+  badge,
 }: {
   label: string;
   value: string;
   mono?: boolean;
+  badge?: { tone: "blue" | "green" };
 }) {
   return (
-    <div>
+    <div className="min-w-0">
       <div className="text-[10px] uppercase tracking-wide text-[var(--color-text-muted)]">
         {label}
       </div>
-      <div className={`text-sm break-all ${mono ? "mono" : ""}`}>{value}</div>
+      {badge ? (
+        <div className="mt-0.5">
+          <span
+            className={`badge ${
+              badge.tone === "blue"
+                ? "bg-[var(--color-accent-blue)]/15 text-[var(--color-accent-blue)]"
+                : "bg-[var(--color-accent)]/15 text-[var(--color-accent)]"
+            }`}
+          >
+            {value}
+          </span>
+        </div>
+      ) : (
+        <div
+          className={`mt-0.5 text-sm break-words ${mono ? "mono text-xs" : ""}`}
+        >
+          {value}
+        </div>
+      )}
     </div>
   );
-}
-
-function formatBytes(n: number): string {
-  if (!n) return "0 B";
-  const units = ["B", "KB", "MB", "GB"];
-  const i = Math.floor(Math.log(n) / Math.log(1024));
-  return `${(n / Math.pow(1024, i)).toFixed(1)} ${units[i]}`;
-}
-
-function formatTime(iso: string): string {
-  try {
-    return new Date(iso).toLocaleString();
-  } catch {
-    return iso;
-  }
 }

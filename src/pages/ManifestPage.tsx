@@ -4,12 +4,18 @@ import type { ManifestTitleEntry, ManifestTitleGroup } from "~/types/manifest";
 import { ErrorBlock, GameGridSkeleton, EmptyState } from "~/components/Loading";
 import { GameSearch, useFilteredGames } from "~/components/Manifest/GameSearch";
 import { GameStats } from "~/components/Manifest/GameStats";
-import { GameList } from "~/components/Manifest/GameList";
+import { ManifestCardGrid } from "~/components/Manifest/ManifestCardGrid";
 import { GameDetail } from "~/components/Manifest/GameDetail";
+import { SlideOver } from "~/components/SlideOver";
 import { Pagination } from "~/components/Pagination";
-import { ManifestFilters, SORT_BY, SORT_DIR, type ManifestFiltersState } from "~/components/Manifest/ManifestFilters";
+import {
+  ManifestFilters,
+  SORT_BY,
+  SORT_DIR,
+  type ManifestFiltersState,
+} from "~/components/Manifest/ManifestFilters";
 
-/** Default entries per page in the manifest table. */
+/** Default entries per page in the manifest grid. */
 const DEFAULT_PAGE_SIZE = 25;
 
 /** A flattened entry paired with its parent group for easy pagination. */
@@ -19,10 +25,13 @@ interface FlatEntry {
 }
 
 /**
- * Manifest Browser page — lists all games from the /titles endpoint, lets the
- * user search/filter/sort (client-side), paginates the entries, and shows full
- * metadata when an entry is selected. Uses `effective_id` from each entry for
- * both display and the /info + /download URLs (never the raw `build_id`).
+ * Manifest Browser page — lists all games from the /titles endpoint as a card
+ * grid (display_name as title, color-coded by file_type, per-card download +
+ * Details buttons). Search/filter/sort client-side; paginated. Clicking
+ * "Details" opens a slide-over panel with full metadata from /info.
+ *
+ * Uses `effective_id` from each entry for both display and the /info +
+ * /download URLs (never the raw `build_id`).
  */
 export function ManifestPage() {
   const { data, isLoading, error, refetch } = useTitles();
@@ -97,6 +106,8 @@ export function ManifestPage() {
     setPage(0);
   }, []);
 
+  const closeSlideOver = useCallback(() => setSelected(null), []);
+
   return (
     <div className="mx-auto max-w-7xl px-6 py-6">
       <header className="mb-5 flex flex-wrap items-end justify-between gap-3">
@@ -141,28 +152,34 @@ export function ManifestPage() {
       )}
 
       {!isLoading && !error && sortedEntries.length > 0 && (
-        <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1fr_24rem]">
-          <div className="flex flex-col gap-4">
-            <GameList
-              entries={pageEntries}
-              onSelect={(entry, group) => setSelected({ group, entry })}
-              selected={
-                selected
-                  ? { appName: selected.group.app_name, effectiveId: selected.entry.effective_id }
-                  : null
-              }
-            />
-            <Pagination
-              page={safePage}
-              pageCount={pageCount}
-              total={sortedEntries.length}
-              pageSize={filters.pageSize}
-              onChange={setPage}
-            />
-          </div>
-          {selected && <GameDetail group={selected.group} entry={selected.entry} />}
+        <div className="flex flex-col gap-5">
+          <ManifestCardGrid
+            entries={pageEntries}
+            onSelect={(entry, group) => setSelected({ group, entry })}
+            selected={
+              selected
+                ? { appName: selected.group.app_name, effectiveId: selected.entry.effective_id }
+                : null
+            }
+          />
+          <Pagination
+            page={safePage}
+            pageCount={pageCount}
+            total={sortedEntries.length}
+            pageSize={filters.pageSize}
+            onChange={setPage}
+          />
         </div>
       )}
+
+      <SlideOver
+        open={selected !== null}
+        onClose={closeSlideOver}
+        title={selected ? selected.entry.effective_id : ""}
+        subtitle={selected ? selected.group.display_name || selected.group.app_name : "Details"}
+      >
+        {selected && <GameDetail group={selected.group} entry={selected.entry} />}
+      </SlideOver>
     </div>
   );
 }
