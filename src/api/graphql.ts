@@ -239,12 +239,7 @@ query searchGameOffers($namespace: String!) {
           type
           url
         }
-        price(country: "US") {
-          price {
-            discountPrice
-            originalPrice
-          }
-        }
+
       }
     }
     searchStore(category: "games/edition/base", namespace: $namespace) {
@@ -273,13 +268,6 @@ export interface OfferItem {
   id: string;
 }
 
-export interface OfferPrice {
-  price?: {
-    discountPrice: number;
-    originalPrice: number;
-  };
-}
-
 export interface OfferElement {
   id: string;
   title: string;
@@ -287,7 +275,6 @@ export interface OfferElement {
   creationDate: string;
   items: OfferItem[];
   keyImages?: Array<{ type: string; url: string }>;
-  price?: OfferPrice;
 }
 
 export interface GameInfo {

@@ -1,7 +1,6 @@
 /**
  * Hook that enriches the base-game offer with egdata data:
  *  - Features (DRM, cloud save, multiplayer, etc.)
- *  - Price stats (current / lowest-ever / last discount → better "was free")
  *
  * Fetches only for the primary game offer (the first BASE_GAME), not every
  * offer in the table.  Results are cached by offerId via react-query.
@@ -10,14 +9,11 @@
 import { useQuery } from "@tanstack/react-query";
 import {
   fetchOfferFeatures,
-  fetchOfferPriceStats,
   type OfferFeature,
-  type PriceStats,
 } from "~/api/egdata";
 
 export interface EgdataEnrichment {
   features: OfferFeature[];
-  priceStats: PriceStats | null;
 }
 
 /**
@@ -40,20 +36,9 @@ export function useEgdataEnrichment(offerId: string | null) {
     retry: 1,
   });
 
-  const priceStats = useQuery({
-    queryKey: ["egdataPriceStats", offerId],
-    queryFn: () => fetchOfferPriceStats(offerId!),
-    enabled: Boolean(offerId),
-    staleTime: 10 * 60 * 1000,
-    retry: 1,
-  });
-
   return {
     features: features.data ?? [],
     featuresLoading: features.isLoading,
     featuresError: features.error,
-    priceStats: priceStats.data ?? null,
-    priceStatsLoading: priceStats.isLoading,
-    priceStatsError: priceStats.error,
   };
 }

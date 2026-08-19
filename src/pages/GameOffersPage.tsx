@@ -45,8 +45,8 @@ const NOTABLE_FEATURE_NAMES = new Set([
 
 /**
  * Game detail page — standalone route at /browse/:namespace.
- * Shows: hero image + game info (title, namespace, releaseDate, DRM flags,
- * egdata price stats) on top, then a searchable/filterable table of catalog
+ * Shows: hero image + game info (title, namespace, releaseDate, DRM flags)
+ * on top, then a searchable/filterable table of catalog
  * offers with row selection and Export to JSON.
  */
 export function GameOffersPage() {
@@ -76,14 +76,6 @@ function GameOffersContent({
 }) {
   const baseOfferId = useMemo(() => pickBaseGameOfferId(offers), [offers]);
   const egdata = useEgdataEnrichment(baseOfferId);
-
-  // Derive "was free" from egdata price-stats (lowest price ever = 0)
-  const wasFreeFromEgdata = useMemo(() => {
-    if (!egdata.priceStats) return false;
-    const lowest = egdata.priceStats.lowest;
-    if (!lowest) return false;
-    return lowest.price === 0;
-  }, [egdata.priceStats]);
 
   // Split features into DRM vs notable
   const { drmFeatures, notableFeatures } = useMemo(() => {
@@ -147,22 +139,6 @@ function GameOffersContent({
           <CopyableRow label="Item ID" value={game.id} />
           {game.releaseDate && (
             <InfoRow label="Release Date" value={formatDate(game.releaseDate)} />
-          )}
-
-          {/* egdata "was free" badge (from price-history) */}
-          {egdata.priceStatsLoading && (
-            <div className="mt-2 flex items-center gap-3 text-sm">
-              <div className="w-32 shrink-0 text-[var(--color-text-muted)]">Free History</div>
-              <span className="text-xs text-[var(--color-text-muted)]">Checking…</span>
-            </div>
-          )}
-          {!egdata.priceStatsLoading && wasFreeFromEgdata && (
-            <div className="mt-2 flex items-center gap-3 text-sm">
-              <div className="w-32 shrink-0 text-[var(--color-text-muted)]">Free History</div>
-              <span className="inline-flex items-center rounded-full bg-[var(--color-accent)]/15 px-2.5 py-0.5 text-[10px] font-semibold uppercase text-[var(--color-accent)]">
-                Was Free
-              </span>
-            </div>
           )}
 
           {/* DRM / features from egdata */}
@@ -308,13 +284,6 @@ function formatDate(iso: string): string {
   } catch {
     return iso;
   }
-}
-
-/** Check if an offer was ever free (originalPrice > 0 but discountPrice === 0). */
-function isWasFree(o: OfferElement): boolean {
-  const p = o.price?.price;
-  if (!p) return false;
-  return p.originalPrice > 0 && p.discountPrice === 0;
 }
 
 /* ------------------------------------------------------------------ */
@@ -526,7 +495,6 @@ function OffersTable({ offers }: { offers: OfferElement[] }) {
                   <th className="px-4 py-3 font-semibold">Title</th>
                   <th className="px-4 py-3 font-semibold">Offer type</th>
                   <th className="px-4 py-3 font-semibold">Created</th>
-                  <th className="px-4 py-3 font-semibold">Price</th>
                 </tr>
               </thead>
               <tbody>
@@ -536,8 +504,6 @@ function OffersTable({ offers }: { offers: OfferElement[] }) {
                   const itemIds = o.items.map((i) => i.id);
                   const isBundle = o.items.length > 1;
                   const canSelect = !isBundle;
-                  const wasFree = isWasFree(o);
-                  const priceVal = o.price?.price;
                   return (
                     <tr
                       key={o.id}
@@ -584,11 +550,6 @@ function OffersTable({ offers }: { offers: OfferElement[] }) {
                       </td>
                       <td className="px-4 py-3 align-top">
                         <span className="text-sm">{o.title}</span>
-                        {wasFree && (
-                          <span className="ml-2 inline-flex items-center rounded-full bg-[var(--color-accent)]/15 px-2 py-0.5 text-[10px] font-semibold uppercase text-[var(--color-accent)]">
-                            Was Free
-                          </span>
-                        )}
                       </td>
                       <td className="px-4 py-3 align-top">
                         <span className="badge bg-[var(--color-accent-blue)]/15 text-[var(--color-accent-blue)]">
@@ -597,24 +558,6 @@ function OffersTable({ offers }: { offers: OfferElement[] }) {
                       </td>
                       <td className="px-4 py-3 align-top text-xs text-[var(--color-text-muted)] whitespace-nowrap">
                         {o.creationDate ? formatDate(o.creationDate) : "—"}
-                      </td>
-                      <td className="px-4 py-3 align-top text-sm">
-                        {priceVal ? (
-                          priceVal.originalPrice === 0 ? (
-                            <span className="text-[var(--color-accent)] font-medium">Free</span>
-                          ) : (
-                            <span>
-                              {formatPrice(priceVal.discountPrice)}
-                              {priceVal.discountPrice < priceVal.originalPrice && (
-                                <span className="ml-1.5 text-xs line-through text-[var(--color-text-muted)]">
-                                  {formatPrice(priceVal.originalPrice)}
-                                </span>
-                              )}
-                            </span>
-                          )
-                        ) : (
-                          <span className="text-[var(--color-text-muted)]">—</span>
-                        )}
                       </td>
                     </tr>
                   );
@@ -686,8 +629,3 @@ function OffersTable({ offers }: { offers: OfferElement[] }) {
   );
 }
 
-/** Format a price value (in cents) to a display string. */
-function formatPrice(cents: number): string {
-  if (cents === 0) return "Free";
-  return `$${(cents / 100).toFixed(2)}`;
-}
