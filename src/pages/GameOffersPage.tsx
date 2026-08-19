@@ -250,7 +250,7 @@ function CopyableRow({
   value: string;
 }) {
   const [copied, setCopied] = useState(false);
-  const timer = useRef<ReturnType<typeof setTimeout>>();
+  const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   const handleCopy = useCallback(async () => {
     try {
@@ -327,7 +327,7 @@ function isWasFree(o: OfferElement): boolean {
 /** Clickable item ID that copies on click. */
 function CopyableItemId({ id }: { id: string }) {
   const [copied, setCopied] = useState(false);
-  const timer = useRef<ReturnType<typeof setTimeout>>();
+  const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   const handleClick = useCallback(async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -355,7 +355,7 @@ function CopyableItemId({ id }: { id: string }) {
   );
 }
 
-function OffersTable({ offers }: { offers: OfferElement[]; wasFreeOfferIds?: undefined }) {
+function OffersTable({ offers }: { offers: OfferElement[] }) {
   const [search, setSearch] = useState("");
   const [offerType, setOfferType] = useState<string>("");
   const [page, setPage] = useState(0);

@@ -24,7 +24,7 @@ export interface EgdataEnrichment {
  * Find the first BASE_GAME offer's ID to query egdata.
  * Falls back to the first offer with exactly 1 item.
  */
-export function pickBaseGameOfferId(offers: { offerType: string; items: { id: string }[] }[]): string | null {
+export function pickBaseGameOfferId(offers: { id: string; offerType: string; items: { id: string }[] }[]): string | null {
   const base = offers.find((o) => o.offerType === "BASE_GAME" && o.items.length === 1);
   if (base) return base.id;
   const fallback = offers.find((o) => o.items.length === 1);
