@@ -12,7 +12,7 @@
   --color-header-fg-muted: #5b5440;  /* slightly dimmed dark text for inactive tabs */
   --color-logo-bg: #7dd3fc;
   --color-text: #ddd;
-  --color-text-muted: #d4d4d4;       /* much brighter than before (#b8b8b8) */
+  --color-text-muted: #74A9B5;       /* muted teal — user-picked accent for secondary text */
   --font-sans: "Outfit Variable", -apple-system, BlinkMacSystemFont, "Segoe UI",
     "Helvetica Neue", Arial, sans-serif;
   --font-mono: "Fira Code Variable", source-code-pro, Menlo, Monaco, Consolas,
