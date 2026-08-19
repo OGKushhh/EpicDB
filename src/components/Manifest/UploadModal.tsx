@@ -12,8 +12,6 @@ interface UploadModalProps {
   onSuccess: () => void;
 }
 
-type UploadPhase = "idle" | "uploading" | "success" | "error";
-
 interface UploadIdle { phase: "idle" }
 interface Uploading { phase: "uploading"; progress: number }
 interface UploadSuccess { phase: "success"; result: UploadResponse }
