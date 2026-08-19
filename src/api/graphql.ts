@@ -239,7 +239,7 @@ query searchGameOffers($namespace: String!) {
           type
           url
         }
-        price {
+        price(country: "US") {
           price {
             discountPrice
             originalPrice

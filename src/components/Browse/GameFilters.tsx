@@ -9,7 +9,6 @@ export const SORT_BY = {
   CREATION_DATE: "creationDate",
   RELEASE_DATE: "releaseDate",
   PC_RELEASE_DATE: "pcReleaseDate",
-  CURRENT_PRICE: "currentPrice",
 } as const;
 export type SortBy = (typeof SORT_BY)[keyof typeof SORT_BY];
 
@@ -25,7 +24,6 @@ const SORT_BY_OPTIONS: Array<{ value: SortBy; label: string }> = [
   { value: SORT_BY.CREATION_DATE, label: "Creation date" },
   { value: SORT_BY.RELEASE_DATE, label: "Release date" },
   { value: SORT_BY.PC_RELEASE_DATE, label: "PC release date" },
-  { value: SORT_BY.CURRENT_PRICE, label: "Price" },
 ];
 
 const SORT_DIR_OPTIONS: Array<{ value: SortDir; label: string }> = [

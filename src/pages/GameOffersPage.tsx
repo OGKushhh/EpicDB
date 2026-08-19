@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams, Link } from "react-router";
 import { useGameOffers, pickOfferImageUrl } from "~/hooks/useGameOffers";
+import { useEgdataEnrichment, pickBaseGameOfferId } from "~/hooks/useEgdataEnrichment";
 import type { OfferElement, GameInfo } from "~/api/graphql";
 import { routes } from "~/components/Header";
 import { ErrorBlock, LoadingFallback, EmptyState } from "~/components/Loading";
@@ -15,12 +16,38 @@ import 'react-medium-image-zoom/dist/styles.css';
 const OFFERS_PAGINATION_THRESHOLD = 10;
 const OFFERS_PAGE_SIZE = 10;
 
+/** DRM / anti-cheat related feature names from egdata that matter for unlocker. */
+const DRM_FEATURE_NAMES = new Set([
+  "DRM",
+  "Denuvo Anti-Cheat",
+  "Easy Anti-Cheat",
+  "BattlEye",
+  "nProtect GameGuard",
+  "Valve Anti-Cheat",
+  "Arxan",
+  "SecuROM",
+  "VMProtect",
+]);
+
+/** Other useful feature names to display. */
+const NOTABLE_FEATURE_NAMES = new Set([
+  "Cloud Saves",
+  "Single Player",
+  "Multiplayer",
+  "Co-op",
+  "Online Multiplayer",
+  "LAN",
+  "PvP",
+  "Cross Platform",
+  "Controller Support",
+  "Remote Play",
+]);
+
 /**
- * Game detail page — standalone route at /browse/:namespace. Mirrors the
- * ScreamDB game-offers page layout: hero image + game info (title, namespace,
- * description, releaseDate) on top, then a searchable/filterable table of catalog
- * offers (image, item ID, title, offer type, creationDate, price) with
- * row selection and Export to JSON (exactly like ScreamDB).
+ * Game detail page — standalone route at /browse/:namespace.
+ * Shows: hero image + game info (title, namespace, releaseDate, DRM flags,
+ * egdata price stats) on top, then a searchable/filterable table of catalog
+ * offers with row selection and Export to JSON.
  */
 export function GameOffersPage() {
   const { namespace = "" } = useParams();
@@ -47,6 +74,34 @@ function GameOffersContent({
   game: GameInfo;
   offers: OfferElement[];
 }) {
+  const baseOfferId = useMemo(() => pickBaseGameOfferId(offers), [offers]);
+  const egdata = useEgdataEnrichment(baseOfferId);
+
+  // Derive "was free" from egdata price-stats (lowest price ever = 0)
+  const wasFreeFromEgdata = useMemo(() => {
+    if (!egdata.priceStats) return false;
+    const lowest = egdata.priceStats.lowest;
+    if (!lowest) return false;
+    return lowest.price === 0;
+  }, [egdata.priceStats]);
+
+  // Split features into DRM vs notable
+  const { drmFeatures, notableFeatures } = useMemo(() => {
+    const drm: string[] = [];
+    const notable: string[] = [];
+    for (const f of egdata.features) {
+      // Only show features that are truthy
+      if (typeof f.value === "string" && f.value !== "" && f.value !== "false" && f.value !== "0") {
+        if (DRM_FEATURE_NAMES.has(f.name)) drm.push(f.value === "true" ? f.name : f.value);
+        else if (NOTABLE_FEATURE_NAMES.has(f.name)) notable.push(f.name);
+      } else if (typeof f.value === "boolean" && f.value) {
+        if (DRM_FEATURE_NAMES.has(f.name)) drm.push(f.name);
+        else if (NOTABLE_FEATURE_NAMES.has(f.name)) notable.push(f.name);
+      }
+    }
+    return { drmFeatures: drm, notableFeatures: notable };
+  }, [egdata.features]);
+
   return (
     <div className="mx-auto max-w-7xl px-6 py-6">
       {/* Top: banner + info */}
@@ -88,11 +143,61 @@ function GameOffersContent({
         </div>
         <div className="flex-1">
           <h1 className="text-3xl font-bold">{game.title}</h1>
-          <InfoRow label="Namespace" value={game.namespace} mono />
-          <InfoRow label="Item ID" value={game.id} mono />
+          <CopyableRow label="Namespace" value={game.namespace} />
+          <CopyableRow label="Item ID" value={game.id} />
           {game.releaseDate && (
             <InfoRow label="Release Date" value={formatDate(game.releaseDate)} />
           )}
+
+          {/* egdata "was free" badge (from price-history) */}
+          {egdata.priceStatsLoading && (
+            <div className="mt-2 flex items-center gap-3 text-sm">
+              <div className="w-32 shrink-0 text-[var(--color-text-muted)]">Free History</div>
+              <span className="text-xs text-[var(--color-text-muted)]">Checking…</span>
+            </div>
+          )}
+          {!egdata.priceStatsLoading && wasFreeFromEgdata && (
+            <div className="mt-2 flex items-center gap-3 text-sm">
+              <div className="w-32 shrink-0 text-[var(--color-text-muted)]">Free History</div>
+              <span className="inline-flex items-center rounded-full bg-[var(--color-accent)]/15 px-2.5 py-0.5 text-[10px] font-semibold uppercase text-[var(--color-accent)]">
+                Was Free
+              </span>
+            </div>
+          )}
+
+          {/* DRM / features from egdata */}
+          {egdata.featuresLoading && (
+            <InfoRow label="Features" value="Loading…" />
+          )}
+          {!egdata.featuresLoading && (drmFeatures.length > 0 || notableFeatures.length > 0) && (
+            <div className="mt-3 flex flex-col gap-2">
+              <div className="text-xs uppercase tracking-wide text-[var(--color-text-muted)]">
+                Features
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {drmFeatures.map((f) => (
+                  <span
+                    key={f}
+                    className="inline-flex items-center rounded-full bg-red-500/15 px-2.5 py-0.5 text-[10px] font-semibold uppercase text-red-400"
+                  >
+                    {f}
+                  </span>
+                ))}
+                {notableFeatures.map((f) => (
+                  <span
+                    key={f}
+                    className="inline-flex items-center rounded-full bg-[var(--color-accent-blue)]/15 px-2.5 py-0.5 text-[10px] font-semibold uppercase text-[var(--color-accent-blue)]"
+                  >
+                    {f}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+          {!egdata.featuresLoading && egdata.featuresError && (
+            <InfoRow label="Features" value="Unavailable (egdata)" />
+          )}
+
           {game.description && (
             <div className="mt-4">
               <div className="text-xs uppercase tracking-wide text-[var(--color-text-muted)]">
@@ -107,10 +212,17 @@ function GameOffersContent({
       </div>
 
       {/* Bottom: offers table with search + filters + selection + export */}
-      <OffersTable offers={offers} />
+      <OffersTable
+        offers={offers}
+        wasFreeOfferIds={wasFreeFromEgdata ? undefined : undefined}
+      />
     </div>
   );
 }
+
+/* ------------------------------------------------------------------ */
+/*  Reusable info row components                                       */
+/* ------------------------------------------------------------------ */
 
 function InfoRow({
   label,
@@ -128,6 +240,47 @@ function InfoRow({
     </div>
   );
 }
+
+/** Click-to-copy info row — copies on click, shows brief feedback. */
+function CopyableRow({
+  label,
+  value,
+}: {
+  label: string;
+  value: string;
+}) {
+  const [copied, setCopied] = useState(false);
+  const timer = useRef<ReturnType<typeof setTimeout>>();
+
+  const handleCopy = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopied(true);
+      clearTimeout(timer.current);
+      timer.current = setTimeout(() => setCopied(false), 1200);
+    } catch {
+      // fallback: do nothing
+    }
+  }, [value]);
+
+  return (
+    <div
+      className="mt-2 flex cursor-pointer items-center gap-3 text-sm transition-colors hover:bg-white/5 rounded px-1 -mx-1"
+      onClick={handleCopy}
+      title="Click to copy"
+    >
+      <div className="w-32 shrink-0 text-[var(--color-text-muted)]">{label}</div>
+      <code className="mono flex-1 break-all">{value}</code>
+      <span className="shrink-0 text-[10px] text-[var(--color-text-muted)] transition-opacity">
+        {copied ? "Copied!" : "Click to copy"}
+      </span>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Helpers                                                           */
+/* ------------------------------------------------------------------ */
 
 /** Pick the best banner image URL from a game's keyImages. */
 function pickBannerUrl(
@@ -167,8 +320,42 @@ function isWasFree(o: OfferElement): boolean {
   return p.originalPrice > 0 && p.discountPrice === 0;
 }
 
-/** Offers table with search, offer-type filter, row selection, and Export to JSON. */
-function OffersTable({ offers }: { offers: OfferElement[] }) {
+/* ------------------------------------------------------------------ */
+/*  Offers table with search, filter, selection, export                */
+/* ------------------------------------------------------------------ */
+
+/** Clickable item ID that copies on click. */
+function CopyableItemId({ id }: { id: string }) {
+  const [copied, setCopied] = useState(false);
+  const timer = useRef<ReturnType<typeof setTimeout>>();
+
+  const handleClick = useCallback(async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      await navigator.clipboard.writeText(id);
+      setCopied(true);
+      clearTimeout(timer.current);
+      timer.current = setTimeout(() => setCopied(false), 1200);
+    } catch {
+      // ignore
+    }
+  }, [id]);
+
+  return (
+    <div
+      className="mono cursor-pointer rounded px-0.5 text-xs break-all transition-colors hover:bg-[var(--color-accent-blue)]/15 hover:text-[var(--color-accent-blue)]"
+      onClick={handleClick}
+      title="Click to copy"
+    >
+      {id}
+      {copied && (
+        <span className="ml-1 text-[9px] text-[var(--color-accent)]">copied</span>
+      )}
+    </div>
+  );
+}
+
+function OffersTable({ offers }: { offers: OfferElement[]; wasFreeOfferIds?: undefined }) {
   const [search, setSearch] = useState("");
   const [offerType, setOfferType] = useState<string>("");
   const [page, setPage] = useState(0);
@@ -238,13 +425,11 @@ function OffersTable({ offers }: { offers: OfferElement[] }) {
   const clearSelection = useCallback(() => setSelected(new Set()), []);
 
   // Build export JSON — same format as ScreamDB: { "itemId": "title" }
-  // Skip bundle offers (items.length > 1), prefer offers with a title.
   const exportJson = useMemo(() => {
     const map = new Map<string, string>();
     for (const el of filtered) {
-      if (el.items.length > 1) continue; // skip bundles
+      if (el.items.length > 1) continue;
       if (!selected.has(el.id)) continue;
-      // If we already have this ID, only overwrite if the new one has a title
       if (!map.has(el.id) || el.title) {
         map.set(el.id, el.title || "Unknown item");
       }
@@ -296,7 +481,7 @@ function OffersTable({ offers }: { offers: OfferElement[] }) {
         </div>
       </div>
 
-      {/* Selection bar — mirrors ScreamDB's OfferTableAlertContent */}
+      {/* Selection bar */}
       {selected.size > 0 && (
         <div className="mb-3 flex flex-wrap items-center gap-3 rounded-lg border border-[var(--color-accent-blue)]/20 bg-[var(--color-accent-blue)]/5 px-4 py-2 text-sm">
           <span className="text-[var(--color-text-muted)]">
@@ -395,9 +580,7 @@ function OffersTable({ offers }: { offers: OfferElement[] }) {
                             <span className="text-xs text-[var(--color-text-muted)]">—</span>
                           ) : (
                             itemIds.map((id) => (
-                              <div key={id} className="mono text-xs break-all">
-                                {id}
-                              </div>
+                              <CopyableItemId key={id} id={id} />
                             ))
                           )}
                         </div>
@@ -457,7 +640,7 @@ function OffersTable({ offers }: { offers: OfferElement[] }) {
         </>
       )}
 
-      {/* JSON export dialog — mirrors ScreamDB's JsonDialog */}
+      {/* JSON export dialog */}
       {showJsonDialog && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70" onClick={() => setShowJsonDialog(false)}>
           <div
