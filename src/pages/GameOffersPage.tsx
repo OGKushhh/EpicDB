@@ -5,6 +5,9 @@ import type { OfferElement, GameInfo } from "~/api/graphql";
 import { routes } from "~/components/Header";
 import { ErrorBlock, LoadingFallback, EmptyState } from "~/components/Loading";
 import { Pagination } from "~/components/Pagination";
+import { getResizedImageUrl } from "~/utils/imageResize";
+import Zoom from 'react-medium-image-zoom';
+import 'react-medium-image-zoom/dist/css.css';
 
 /** Below this many offers, we don't bother showing pagination — just render
  *  all rows. Above the threshold, paginate (10 per page). */
@@ -49,11 +52,13 @@ function GameOffersContent({
         <div className="shrink-0">
           <div className="aspect-[16/9] w-80 overflow-hidden rounded-lg border border-white/10 bg-[var(--color-bg-3)]">
             {pickBannerUrl(game.keyImages) ? (
-              <img
-                src={pickBannerUrl(game.keyImages) ?? ""}
-                alt={game.title}
-                className="h-full w-full object-cover"
-              />
+              <Zoom zoomImg={{ src: pickBannerUrl(game.keyImages) ?? "" }}>
+                <img
+                  src={getResizedImageUrl({ url: pickBannerUrl(game.keyImages)!, w: 640, h: 360, q: 'medium' }) ?? pickBannerUrl(game.keyImages)!}
+                  alt={game.title}
+                  className="h-full w-full cursor-zoom-in object-cover"
+                />
+              </Zoom>
             ) : (
               <div className="flex h-full w-full items-center justify-center text-sm text-[var(--color-text-muted)]">
                 no image
@@ -228,7 +233,9 @@ function OffersTable({ offers }: { offers: OfferElement[] }) {
               </thead>
               <tbody>
                 {paged.map((o) => {
-                  const imageUrl = pickOfferImageUrl(o.keyImages);
+                  const rawUrl = pickOfferImageUrl(o.keyImages);
+                  // ScreamDB uses w:256 h:144 q:medium for table thumbnails
+                  const imageUrl = rawUrl ? getResizedImageUrl({ url: rawUrl, w: 256, h: 144, q: 'medium' }) : null;
                   const itemIds = o.items.map((i) => i.id);
                   return (
                     <tr
@@ -238,12 +245,14 @@ function OffersTable({ offers }: { offers: OfferElement[] }) {
                       <td className="px-4 py-3 align-top">
                         <div className="h-16 w-16 overflow-hidden rounded border border-white/10 bg-[var(--color-bg-3)]">
                           {imageUrl ? (
-                            <img
-                              src={imageUrl}
-                              alt={o.title}
-                              loading="lazy"
-                              className="h-full w-full object-cover"
-                            />
+                            <Zoom isDisabled={!rawUrl} zoomImg={{ src: rawUrl ?? "" }}>
+                              <img
+                                src={imageUrl}
+                                alt={o.title}
+                                loading="lazy"
+                                className="h-full w-full cursor-zoom-in object-cover"
+                              />
+                            </Zoom>
                           ) : (
                             <div className="flex h-full w-full items-center justify-center text-[10px] text-[var(--color-text-muted)]">
                               —

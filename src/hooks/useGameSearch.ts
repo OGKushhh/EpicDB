@@ -5,6 +5,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { searchStore, KEY_IMAGE_TYPES, type SearchStoreElement } from "~/api/graphql";
+import { getResizedImageUrl } from "~/utils/imageResize";
 
 export interface GameCardData {
   id: string;
@@ -57,7 +58,10 @@ function elementToCard(el: SearchStoreElement): GameCardData {
   const wide = images.find((i) => i.type === KEY_IMAGE_TYPES.OFFER_IMAGE_WIDE);
   const dell = images.find((i) => i.type === KEY_IMAGE_TYPES.DELL_IMAGE);
   const thumb = images.find((i) => i.type === KEY_IMAGE_TYPES.THUMBNAIL);
-  const imageUrl = (tall ?? wide ?? dell ?? thumb)?.url ?? null;
+  const rawUrl = (tall ?? wide ?? dell ?? thumb)?.url ?? null;
+  // Request a smaller, medium-quality copy from Epic's CDN — much faster
+  // to load on the Browse grid.  ScreamDB uses the same approach (w:360 h:480).
+  const imageUrl = rawUrl ? getResizedImageUrl({ url: rawUrl, w: 360, h: 480, q: 'medium' }) : null;
   return {
     id: el.id,
     title: el.title,

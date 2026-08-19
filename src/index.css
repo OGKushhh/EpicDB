@@ -121,3 +121,8 @@
     @apply border-[var(--color-accent-blue)] bg-[var(--color-accent-blue)]/15 text-[var(--color-text)];
   }
 }
+
+/* react-medium-image-zoom dark theme overrides */
+[data-rmiz-modal-overlay="visible"] {
+  background-color: rgba(0, 0, 0, 0.85) !important;
+}
