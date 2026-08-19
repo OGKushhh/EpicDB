@@ -231,12 +231,19 @@ query searchGameOffers($namespace: String!) {
         id
         title
         offerType
+        creationDate
         items {
           id
         }
         keyImages {
           type
           url
+        }
+        price {
+          price {
+            discountPrice
+            originalPrice
+          }
         }
       }
     }
@@ -246,6 +253,7 @@ query searchGameOffers($namespace: String!) {
         title
         description
         namespace
+        releaseDate
         keyImages {
           type
           url
@@ -265,12 +273,21 @@ export interface OfferItem {
   id: string;
 }
 
+export interface OfferPrice {
+  price?: {
+    discountPrice: number;
+    originalPrice: number;
+  };
+}
+
 export interface OfferElement {
   id: string;
   title: string;
   offerType: string;
+  creationDate: string;
   items: OfferItem[];
   keyImages?: Array<{ type: string; url: string }>;
+  price?: OfferPrice;
 }
 
 export interface GameInfo {
@@ -278,6 +295,7 @@ export interface GameInfo {
   title: string;
   description: string | null;
   namespace: string;
+  releaseDate?: string | null;
   keyImages?: Array<{ type: string; url: string }>;
   catalogNs?: {
     mappings?: Array<{ pageSlug: string }>;

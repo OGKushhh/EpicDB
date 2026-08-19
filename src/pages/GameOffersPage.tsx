@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams, Link } from "react-router";
 import { useGameOffers, pickOfferImageUrl } from "~/hooks/useGameOffers";
 import type { OfferElement, GameInfo } from "~/api/graphql";
 import { routes } from "~/components/Header";
 import { ErrorBlock, LoadingFallback, EmptyState } from "~/components/Loading";
 import { Pagination } from "~/components/Pagination";
+import { JsonViewer } from "~/components/JsonViewer";
 import { getResizedImageUrl } from "~/utils/imageResize";
 import Zoom from 'react-medium-image-zoom';
 import 'react-medium-image-zoom/dist/styles.css';
@@ -17,8 +18,9 @@ const OFFERS_PAGE_SIZE = 10;
 /**
  * Game detail page — standalone route at /browse/:namespace. Mirrors the
  * ScreamDB game-offers page layout: hero image + game info (title, namespace,
- * description) on top, then a searchable/filterable table of catalog offers
- * (image, item ID, title, offer type).
+ * description, releaseDate) on top, then a searchable/filterable table of catalog
+ * offers (image, item ID, title, offer type, creationDate, price) with
+ * row selection and Export to JSON (exactly like ScreamDB).
  */
 export function GameOffersPage() {
   const { namespace = "" } = useParams();
@@ -88,6 +90,9 @@ function GameOffersContent({
           <h1 className="text-3xl font-bold">{game.title}</h1>
           <InfoRow label="Namespace" value={game.namespace} mono />
           <InfoRow label="Item ID" value={game.id} mono />
+          {game.releaseDate && (
+            <InfoRow label="Release Date" value={formatDate(game.releaseDate)} />
+          )}
           {game.description && (
             <div className="mt-4">
               <div className="text-xs uppercase tracking-wide text-[var(--color-text-muted)]">
@@ -101,7 +106,7 @@ function GameOffersContent({
         </div>
       </div>
 
-      {/* Bottom: offers table with search + filters */}
+      {/* Bottom: offers table with search + filters + selection + export */}
       <OffersTable offers={offers} />
     </div>
   );
@@ -118,7 +123,7 @@ function InfoRow({
 }) {
   return (
     <div className="mt-2 flex items-center gap-3 text-sm">
-      <div className="w-28 shrink-0 text-[var(--color-text-muted)]">{label}</div>
+      <div className="w-32 shrink-0 text-[var(--color-text-muted)]">{label}</div>
       <code className={`flex-1 break-all ${mono ? "mono" : ""}`}>{value}</code>
     </div>
   );
@@ -142,11 +147,33 @@ function pickBannerUrl(
   return keyImages[0].url;
 }
 
-/** Offers table with search + offer-type filter + pagination when above threshold. */
+/** Format an ISO date string to a readable date. */
+function formatDate(iso: string): string {
+  try {
+    return new Date(iso).toLocaleDateString(undefined, {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  } catch {
+    return iso;
+  }
+}
+
+/** Check if an offer was ever free (originalPrice > 0 but discountPrice === 0). */
+function isWasFree(o: OfferElement): boolean {
+  const p = o.price?.price;
+  if (!p) return false;
+  return p.originalPrice > 0 && p.discountPrice === 0;
+}
+
+/** Offers table with search, offer-type filter, row selection, and Export to JSON. */
 function OffersTable({ offers }: { offers: OfferElement[] }) {
   const [search, setSearch] = useState("");
   const [offerType, setOfferType] = useState<string>("");
   const [page, setPage] = useState(0);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [showJsonDialog, setShowJsonDialog] = useState(false);
 
   // Reset to first page when search/filter changes.
   useEffect(() => {
@@ -183,6 +210,58 @@ function OffersTable({ offers }: { offers: OfferElement[] }) {
     ? filtered.slice(safePage * OFFERS_PAGE_SIZE, (safePage + 1) * OFFERS_PAGE_SIZE)
     : filtered;
 
+  // --- Selection logic (mirrors ScreamDB's OfferTableAlertContent) ---
+  const selectable = useMemo(
+    () => new Set(filtered.filter((e) => e.items.length <= 1).map((e) => e.id)),
+    [filtered]
+  );
+  const allSelected = selectable.size > 0 && selected.size === selectable.size &&
+    [...selectable].every((id) => selected.has(id));
+
+  const toggleOne = useCallback((id: string) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+
+  const toggleAll = useCallback(() => {
+    if (allSelected) {
+      setSelected(new Set());
+    } else {
+      setSelected(new Set(selectable));
+    }
+  }, [allSelected, selectable]);
+
+  const clearSelection = useCallback(() => setSelected(new Set()), []);
+
+  // Build export JSON — same format as ScreamDB: { "itemId": "title" }
+  // Skip bundle offers (items.length > 1), prefer offers with a title.
+  const exportJson = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const el of filtered) {
+      if (el.items.length > 1) continue; // skip bundles
+      if (!selected.has(el.id)) continue;
+      // If we already have this ID, only overwrite if the new one has a title
+      if (!map.has(el.id) || el.title) {
+        map.set(el.id, el.title || "Unknown item");
+      }
+    }
+    return Object.fromEntries(map);
+  }, [filtered, selected]);
+
+  const jsonString = useMemo(() => JSON.stringify(exportJson, null, 2), [exportJson]);
+
+  const copyToClipboard = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(jsonString);
+    } catch (e) {
+      console.error("Failed to copy JSON", e);
+    }
+  }, [jsonString]);
+
   return (
     <div>
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
@@ -217,31 +296,81 @@ function OffersTable({ offers }: { offers: OfferElement[] }) {
         </div>
       </div>
 
+      {/* Selection bar — mirrors ScreamDB's OfferTableAlertContent */}
+      {selected.size > 0 && (
+        <div className="mb-3 flex flex-wrap items-center gap-3 rounded-lg border border-[var(--color-accent-blue)]/20 bg-[var(--color-accent-blue)]/5 px-4 py-2 text-sm">
+          <span className="text-[var(--color-text-muted)]">
+            {selected.size} of {selectable.size} items selected
+          </span>
+          <button
+            type="button"
+            onClick={clearSelection}
+            className="text-[var(--color-accent-blue)] hover:underline"
+          >
+            Clear selection
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowJsonDialog(true)}
+            className="btn-primary !py-1 !px-3 !text-xs"
+          >
+            <svg className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="currentColor">
+              <path d="M8 0a1 1 0 0 1 .7.3l3 3a1 1 0 0 1-1.4 1.4L9 3.4V10a1 1 0 1 1-2 0V3.4L5.7 4.7a1 1 0 0 1-1.4-1.4l3-3A1 1 0 0 1 8 0ZM1 9h2a1 1 0 1 1 0 2H2v3h12v-3h-1a1 1 0 1 1 0-2h2a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1H1a1 1 0 0 1-1-1v-4a1 1 0 0 1 1-1Z"/>
+            </svg>
+            Export as JSON
+          </button>
+        </div>
+      )}
+
       {filtered.length === 0 ? (
         <EmptyState title="No offers found" hint="Try a different search or filter." />
       ) : (
         <>
           <div className="card !p-0 overflow-x-auto">
-            <table className="w-full min-w-[640px] text-left">
+            <table className="w-full min-w-[720px] text-left">
               <thead className="bg-[var(--color-bg-3)] text-xs uppercase tracking-wide text-[var(--color-text-muted)]">
                 <tr>
+                  <th className="w-10 px-3 py-3">
+                    <input
+                      type="checkbox"
+                      checked={allSelected}
+                      onChange={toggleAll}
+                      className="h-4 w-4 cursor-pointer accent-[var(--color-accent-blue)]"
+                      title={allSelected ? "Deselect all" : "Select all"}
+                    />
+                  </th>
                   <th className="px-4 py-3 font-semibold">Image</th>
                   <th className="px-4 py-3 font-semibold">Item ID</th>
                   <th className="px-4 py-3 font-semibold">Title</th>
                   <th className="px-4 py-3 font-semibold">Offer type</th>
+                  <th className="px-4 py-3 font-semibold">Created</th>
+                  <th className="px-4 py-3 font-semibold">Price</th>
                 </tr>
               </thead>
               <tbody>
                 {paged.map((o) => {
                   const rawUrl = pickOfferImageUrl(o.keyImages);
-                  // ScreamDB uses w:256 h:144 q:medium for table thumbnails
                   const imageUrl = rawUrl ? getResizedImageUrl({ url: rawUrl, w: 256, h: 144, q: 'medium' }) : null;
                   const itemIds = o.items.map((i) => i.id);
+                  const isBundle = o.items.length > 1;
+                  const canSelect = !isBundle;
+                  const wasFree = isWasFree(o);
+                  const priceVal = o.price?.price;
                   return (
                     <tr
                       key={o.id}
-                      className="border-b border-white/5 transition-colors hover:bg-white/5"
+                      className={`border-b border-white/5 transition-colors hover:bg-white/5 ${selected.has(o.id) ? "bg-[var(--color-accent-blue)]/5" : ""}`}
                     >
+                      <td className="px-3 py-3 align-middle">
+                        <input
+                          type="checkbox"
+                          checked={selected.has(o.id)}
+                          disabled={!canSelect}
+                          onChange={() => toggleOne(o.id)}
+                          className="h-4 w-4 cursor-pointer disabled:cursor-not-allowed disabled:opacity-30 accent-[var(--color-accent-blue)]"
+                          title={isBundle ? "Bundles cannot be exported" : "Select for JSON export"}
+                        />
+                      </td>
                       <td className="px-4 py-3 align-top">
                         <div className="h-16 w-16 overflow-hidden rounded border border-white/10 bg-[var(--color-bg-3)]">
                           {imageUrl ? (
@@ -273,11 +402,39 @@ function OffersTable({ offers }: { offers: OfferElement[] }) {
                           )}
                         </div>
                       </td>
-                      <td className="px-4 py-3 align-top text-sm">{o.title}</td>
+                      <td className="px-4 py-3 align-top">
+                        <span className="text-sm">{o.title}</span>
+                        {wasFree && (
+                          <span className="ml-2 inline-flex items-center rounded-full bg-[var(--color-accent)]/15 px-2 py-0.5 text-[10px] font-semibold uppercase text-[var(--color-accent)]">
+                            Was Free
+                          </span>
+                        )}
+                      </td>
                       <td className="px-4 py-3 align-top">
                         <span className="badge bg-[var(--color-accent-blue)]/15 text-[var(--color-accent-blue)]">
                           {o.offerType || "—"}
                         </span>
+                      </td>
+                      <td className="px-4 py-3 align-top text-xs text-[var(--color-text-muted)] whitespace-nowrap">
+                        {o.creationDate ? formatDate(o.creationDate) : "—"}
+                      </td>
+                      <td className="px-4 py-3 align-top text-sm">
+                        {priceVal ? (
+                          priceVal.originalPrice === 0 ? (
+                            <span className="text-[var(--color-accent)] font-medium">Free</span>
+                          ) : (
+                            <span>
+                              {formatPrice(priceVal.discountPrice)}
+                              {priceVal.discountPrice < priceVal.originalPrice && (
+                                <span className="ml-1.5 text-xs line-through text-[var(--color-text-muted)]">
+                                  {formatPrice(priceVal.originalPrice)}
+                                </span>
+                              )}
+                            </span>
+                          )
+                        ) : (
+                          <span className="text-[var(--color-text-muted)]">—</span>
+                        )}
                       </td>
                     </tr>
                   );
@@ -300,6 +457,46 @@ function OffersTable({ offers }: { offers: OfferElement[] }) {
         </>
       )}
 
+      {/* JSON export dialog — mirrors ScreamDB's JsonDialog */}
+      {showJsonDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70" onClick={() => setShowJsonDialog(false)}>
+          <div
+            className="mx-4 flex max-h-[75vh] w-full max-w-2xl flex-col rounded-lg border border-white/10 bg-[var(--color-bg-2)]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
+              <h3 className="text-base font-semibold">Export JSON</h3>
+              <button
+                type="button"
+                onClick={() => setShowJsonDialog(false)}
+                className="text-[var(--color-text-muted)] hover:text-white"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="flex-1 overflow-auto p-4">
+              <JsonViewer data={exportJson} defaultExpandedDepth={2} />
+            </div>
+            <div className="flex justify-end gap-2 border-t border-white/10 px-4 py-3">
+              <button
+                type="button"
+                onClick={() => setShowJsonDialog(false)}
+                className="btn-ghost !py-1.5 !px-4 !text-sm"
+              >
+                Close
+              </button>
+              <button
+                type="button"
+                onClick={() => { void copyToClipboard(); }}
+                className="btn-outline !py-1.5 !px-4 !text-sm"
+              >
+                Copy to clipboard
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="mt-4">
         <Link to={routes.browse} className="btn-ghost !text-sm">
           ← Back to browse
@@ -307,4 +504,10 @@ function OffersTable({ offers }: { offers: OfferElement[] }) {
       </div>
     </div>
   );
+}
+
+/** Format a price value (in cents) to a display string. */
+function formatPrice(cents: number): string {
+  if (cents === 0) return "Free";
+  return `$${(cents / 100).toFixed(2)}`;
 }
