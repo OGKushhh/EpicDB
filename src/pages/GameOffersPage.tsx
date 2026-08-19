@@ -212,10 +212,7 @@ function GameOffersContent({
       </div>
 
       {/* Bottom: offers table with search + filters + selection + export */}
-      <OffersTable
-        offers={offers}
-        wasFreeOfferIds={wasFreeFromEgdata ? undefined : undefined}
-      />
+      <OffersTable offers={offers} />
     </div>
   );
 }
