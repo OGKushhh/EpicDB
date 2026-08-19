@@ -7,7 +7,7 @@ import { ErrorBlock, LoadingFallback, EmptyState } from "~/components/Loading";
 import { Pagination } from "~/components/Pagination";
 import { getResizedImageUrl } from "~/utils/imageResize";
 import Zoom from 'react-medium-image-zoom';
-import 'react-medium-image-zoom/dist/css.css';
+import 'react-medium-image-zoom/dist/styles.css';
 
 /** Below this many offers, we don't bother showing pagination — just render
  *  all rows. Above the threshold, paginate (10 per page). */
