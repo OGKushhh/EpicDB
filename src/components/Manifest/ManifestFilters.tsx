@@ -1,4 +1,4 @@
-/** Sort/page-size dropdowns for the Manifest page. Same compact style as Browse. */
+/** Sort/filter/page-size dropdowns for the Manifest page. Same compact style as Browse. */
 
 import { PAGE_SIZE_OPTIONS as BROWSE_PAGE_SIZE_OPTIONS } from "~/components/Browse/GameFilters";
 
@@ -9,7 +9,6 @@ export type PageSize = (typeof BROWSE_PAGE_SIZE_OPTIONS)[number];
 export const SORT_BY = {
   UPLOADED_AT: "uploaded_at",
   EFFECTIVE_ID: "effective_id",
-  FILE_TYPE: "file_type",
   BUILD_VERSION: "build_version",
   APP_NAME: "app_name",
 } as const;
@@ -21,10 +20,17 @@ export const SORT_DIR = {
 } as const;
 export type SortDir = (typeof SORT_DIR)[keyof typeof SORT_DIR];
 
+/** Filter the entry list by file_type. "" = no filter (show both). */
+export const FILE_TYPE_FILTER = {
+  ALL: "",
+  BINARY: "binary",
+  JSON: "json",
+} as const;
+export type FileTypeFilter = (typeof FILE_TYPE_FILTER)[keyof typeof FILE_TYPE_FILTER];
+
 const SORT_BY_OPTIONS: Array<{ value: SortBy; label: string }> = [
   { value: SORT_BY.UPLOADED_AT, label: "Upload date" },
   { value: SORT_BY.EFFECTIVE_ID, label: "Build ID" },
-  { value: SORT_BY.FILE_TYPE, label: "File type" },
   { value: SORT_BY.BUILD_VERSION, label: "Build version" },
   { value: SORT_BY.APP_NAME, label: "App name" },
 ];
@@ -34,10 +40,18 @@ const SORT_DIR_OPTIONS: Array<{ value: SortDir; label: string }> = [
   { value: SORT_DIR.DESC, label: "Descending" },
 ];
 
+const FILE_TYPE_OPTIONS: Array<{ value: FileTypeFilter; label: string }> = [
+  { value: FILE_TYPE_FILTER.ALL, label: "All types" },
+  { value: FILE_TYPE_FILTER.BINARY, label: "Binary (.manifest)" },
+  { value: FILE_TYPE_FILTER.JSON, label: "JSON (.item)" },
+];
+
 export interface ManifestFiltersState {
   pageSize: PageSize;
   sortBy: SortBy;
   sortDir: SortDir;
+  /** "" = show all entries; "binary" / "json" = only show that file_type. */
+  fileType: FileTypeFilter;
 }
 
 export interface ManifestFiltersProps {
@@ -52,6 +66,18 @@ export interface ManifestFiltersProps {
 export function ManifestFilters({ state, onChange }: ManifestFiltersProps) {
   return (
     <div className="flex flex-wrap items-center gap-2">
+      <select
+        className="input-compact"
+        value={state.fileType}
+        onChange={(e) => onChange({ fileType: e.target.value as FileTypeFilter })}
+        title="Filter by file type"
+      >
+        {FILE_TYPE_OPTIONS.map((opt) => (
+          <option key={opt.value} value={opt.value}>
+            {opt.label}
+          </option>
+        ))}
+      </select>
       <select
         className="input-compact"
         value={state.sortBy}

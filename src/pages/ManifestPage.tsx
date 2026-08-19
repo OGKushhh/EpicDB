@@ -12,6 +12,7 @@ import {
   ManifestFilters,
   SORT_BY,
   SORT_DIR,
+  FILE_TYPE_FILTER,
   type ManifestFiltersState,
 } from "~/components/Manifest/ManifestFilters";
 
@@ -41,6 +42,7 @@ export function ManifestPage() {
     pageSize: DEFAULT_PAGE_SIZE,
     sortBy: SORT_BY.UPLOADED_AT,
     sortDir: SORT_DIR.DESC,
+    fileType: FILE_TYPE_FILTER.ALL,
   });
   const [selected, setSelected] =
     useState<{ group: ManifestTitleGroup; entry: ManifestTitleEntry } | null>(null);
@@ -54,13 +56,21 @@ export function ManifestPage() {
   );
   const filtered = useFilteredGames(data?.games ?? [], query, haystackFn);
 
-  // Flatten filtered groups into a single list of {entry, group} for pagination.
+  // Flatten filtered groups into a single list of {entry, group} for pagination,
+  // applying the file_type filter at the same time so groups with no matching
+  // entries drop out entirely (and the count summary stays consistent).
   const flatEntries = useMemo<FlatEntry[]>(
     () =>
       filtered.flatMap((group) =>
-        group.entries.map((entry) => ({ entry, group }))
+        group.entries
+          .filter((entry) =>
+            filters.fileType === FILE_TYPE_FILTER.ALL
+              ? true
+              : entry.file_type === filters.fileType
+          )
+          .map((entry) => ({ entry, group }))
       ),
-    [filtered]
+    [filtered, filters.fileType]
   );
 
   // Sort the flat entries per the user's sort selection.
@@ -71,8 +81,6 @@ export function ManifestPage() {
       switch (filters.sortBy) {
         case SORT_BY.EFFECTIVE_ID:
           return a.entry.effective_id.localeCompare(b.entry.effective_id) * dir;
-        case SORT_BY.FILE_TYPE:
-          return a.entry.file_type.localeCompare(b.entry.file_type) * dir;
         case SORT_BY.BUILD_VERSION:
           return (a.entry.build_version || "").localeCompare(b.entry.build_version || "") * dir;
         case SORT_BY.APP_NAME:

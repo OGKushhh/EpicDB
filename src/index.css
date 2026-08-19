@@ -17,7 +17,12 @@
   --color-header-fg-muted: #5b5440;  /* slightly dimmed dark text for inactive tabs */
   --color-logo-bg: #7dd3fc;
   --color-text: #ddd;
-  --color-text-muted: #74A9B5;       /* muted teal — user-picked accent for secondary text */
+  --color-text-muted: #b5a878;       /* warm amber-gray — picks up the gold header band
+                                    and stays readable on the warm mid-gray page bg.
+                                    (Previous #74A9B5 teal was the only cold color in an
+                                    otherwise warm palette — it stuck out. We can now
+                                    switch freely since the .text-base / --color-base
+                                    collision that forced the teal is gone.) */
   --font-sans: "Outfit Variable", -apple-system, BlinkMacSystemFont, "Segoe UI",
     "Helvetica Neue", Arial, sans-serif;
   --font-mono: "Fira Code Variable", source-code-pro, Menlo, Monaco, Consolas,
