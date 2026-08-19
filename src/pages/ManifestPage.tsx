@@ -13,8 +13,10 @@ import {
   SORT_BY,
   SORT_DIR,
   FILE_TYPE_FILTER,
+  COUNTERPART_FILTER,
   type ManifestFiltersState,
 } from "~/components/Manifest/ManifestFilters";
+import { findRelated } from "~/types/manifest";
 import { UploadModal } from "~/components/Manifest/UploadModal";
 
 /** Default entries per page in the manifest grid. */
@@ -44,6 +46,7 @@ export function ManifestPage() {
     sortBy: SORT_BY.UPLOADED_AT,
     sortDir: SORT_DIR.DESC,
     fileType: FILE_TYPE_FILTER.ALL,
+    counterpart: COUNTERPART_FILTER.ALL,
   });
   const [selected, setSelected] =
     useState<{ group: ManifestTitleGroup; entry: ManifestTitleEntry } | null>(null);
@@ -59,20 +62,27 @@ export function ManifestPage() {
   const filtered = useFilteredGames(data?.games ?? [], query, haystackFn);
 
   // Flatten filtered groups into a single list of {entry, group} for pagination,
-  // applying the file_type filter at the same time so groups with no matching
-  // entries drop out entirely (and the count summary stays consistent).
+  // applying the file_type and counterpart filters at the same time so groups
+  // with no matching entries drop out entirely.
   const flatEntries = useMemo<FlatEntry[]>(
     () =>
       filtered.flatMap((group) =>
         group.entries
-          .filter((entry) =>
-            filters.fileType === FILE_TYPE_FILTER.ALL
-              ? true
-              : entry.file_type === filters.fileType
-          )
+          .filter((entry) => {
+            if (filters.fileType !== FILE_TYPE_FILTER.ALL && entry.file_type !== filters.fileType) return false;
+            if (filters.counterpart !== COUNTERPART_FILTER.ALL) {
+              const { tier1, tier2 } = findRelated(entry, group);
+              switch (filters.counterpart) {
+                case COUNTERPART_FILTER.MATCHING: return tier1.length > 0;
+                case COUNTERPART_FILTER.RELATED: return tier2.length > 0 && tier1.length === 0;
+                case COUNTERPART_FILTER.BOTH: return tier1.length > 0 || tier2.length > 0;
+              }
+            }
+            return true;
+          })
           .map((entry) => ({ entry, group }))
       ),
-    [filtered, filters.fileType]
+    [filtered, filters.fileType, filters.counterpart]
   );
 
   // Sort the flat entries per the user's sort selection.

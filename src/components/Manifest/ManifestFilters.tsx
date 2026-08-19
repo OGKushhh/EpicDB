@@ -28,6 +28,22 @@ export const FILE_TYPE_FILTER = {
 } as const;
 export type FileTypeFilter = (typeof FILE_TYPE_FILTER)[keyof typeof FILE_TYPE_FILTER];
 
+/** Counterpart relation filter. "" = no filter (default, show all). */
+export const COUNTERPART_FILTER = {
+  ALL: "",
+  MATCHING: "matching",
+  RELATED: "related",
+  BOTH: "both",
+} as const;
+export type CounterpartFilter = (typeof COUNTERPART_FILTER)[keyof typeof COUNTERPART_FILTER];
+
+const COUNTERPART_OPTIONS: Array<{ value: CounterpartFilter; label: string }> = [
+  { value: COUNTERPART_FILTER.ALL, label: "All entries" },
+  { value: COUNTERPART_FILTER.MATCHING, label: "Has match" },
+  { value: COUNTERPART_FILTER.RELATED, label: "Only related" },
+  { value: COUNTERPART_FILTER.BOTH, label: "Has match or related" },
+];
+
 const SORT_BY_OPTIONS: Array<{ value: SortBy; label: string }> = [
   { value: SORT_BY.UPLOADED_AT, label: "Upload date" },
   { value: SORT_BY.EFFECTIVE_ID, label: "Build ID" },
@@ -52,6 +68,8 @@ export interface ManifestFiltersState {
   sortDir: SortDir;
   /** "" = show all entries; "binary" / "json" = only show that file_type. */
   fileType: FileTypeFilter;
+  /** Counterpart relation filter. */
+  counterpart: CounterpartFilter;
 }
 
 export interface ManifestFiltersProps {
@@ -66,6 +84,18 @@ export interface ManifestFiltersProps {
 export function ManifestFilters({ state, onChange }: ManifestFiltersProps) {
   return (
     <div className="flex flex-wrap items-center gap-2">
+      <select
+        className="input-compact"
+        value={state.counterpart}
+        onChange={(e) => onChange({ counterpart: e.target.value as CounterpartFilter })}
+        title="Counterpart filter"
+      >
+        {COUNTERPART_OPTIONS.map((opt) => (
+          <option key={opt.value} value={opt.value}>
+            {opt.label}
+          </option>
+        ))}
+      </select>
       <select
         className="input-compact"
         value={state.fileType}
