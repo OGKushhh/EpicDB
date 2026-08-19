@@ -47,7 +47,7 @@ function GameOffersContent({
       {/* Top: banner + info */}
       <div className="mb-6 flex flex-col gap-6 sm:flex-row">
         <div className="shrink-0">
-          <div className="aspect-[16/9] w-80 overflow-hidden rounded-lg border border-white/10 bg-[var(--color-base-3)]">
+          <div className="aspect-[16/9] w-80 overflow-hidden rounded-lg border border-white/10 bg-[var(--color-bg-3)]">
             {pickBannerUrl(game.keyImages) ? (
               <img
                 src={pickBannerUrl(game.keyImages) ?? ""}
@@ -218,7 +218,7 @@ function OffersTable({ offers }: { offers: OfferElement[] }) {
         <>
           <div className="card !p-0 overflow-x-auto">
             <table className="w-full min-w-[640px] text-left">
-              <thead className="bg-[var(--color-base-3)] text-xs uppercase tracking-wide text-[var(--color-text-muted)]">
+              <thead className="bg-[var(--color-bg-3)] text-xs uppercase tracking-wide text-[var(--color-text-muted)]">
                 <tr>
                   <th className="px-4 py-3 font-semibold">Image</th>
                   <th className="px-4 py-3 font-semibold">Item ID</th>
@@ -236,7 +236,7 @@ function OffersTable({ offers }: { offers: OfferElement[] }) {
                       className="border-b border-white/5 transition-colors hover:bg-white/5"
                     >
                       <td className="px-4 py-3 align-top">
-                        <div className="h-16 w-16 overflow-hidden rounded border border-white/10 bg-[var(--color-base-3)]">
+                        <div className="h-16 w-16 overflow-hidden rounded border border-white/10 bg-[var(--color-bg-3)]">
                           {imageUrl ? (
                             <img
                               src={imageUrl}

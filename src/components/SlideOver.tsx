@@ -55,7 +55,7 @@ export function SlideOver({
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className="relative flex h-full w-full max-w-[32rem] flex-col border-l border-white/10 bg-[var(--color-base-2)] shadow-2xl"
+        className="relative flex h-full w-full max-w-[32rem] flex-col border-l border-white/10 bg-[var(--color-bg-2)] shadow-2xl"
       >
         {/* Header */}
         <div className="flex items-start justify-between gap-3 border-b border-white/10 px-5 py-4">

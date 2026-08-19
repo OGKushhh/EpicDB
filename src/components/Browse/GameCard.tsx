@@ -18,7 +18,7 @@ export function GameCard({ game }: { game: GameCardData }) {
       className="group flex flex-col text-left transition-transform hover:-translate-y-0.5"
       title={game.title}
     >
-      <div className="aspect-[3/4] w-full overflow-hidden rounded-md border border-white/10 bg-[var(--color-base-3)] transition-colors group-hover:border-[var(--color-accent-blue)] group-hover:shadow-[0_0_0_2px_var(--color-accent-blue)]">
+      <div className="aspect-[3/4] w-full overflow-hidden rounded-md border border-white/10 bg-[var(--color-bg-3)] transition-colors group-hover:border-[var(--color-accent-blue)] group-hover:shadow-[0_0_0_2px_var(--color-accent-blue)]">
         {game.imageUrl ? (
           <img
             src={game.imageUrl}

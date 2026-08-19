@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useGameSearch } from "~/hooks/useGameSearch";
 import {
   GameFilters,
@@ -24,10 +24,24 @@ export function BrowsePage() {
     sortDir: SORT_DIR.DESC,
   });
 
-  // Reset to first page when search keywords or sort/page-size changes.
-  useEffect(() => {
+  // Reset to first page immediately when the user types in the search box.
+  // Doing this in the change handler (not a useEffect) avoids a stale-render
+  // race where `useGameSearch` would briefly fire with the OLD page before
+  // the page-reset effect ran — that race produced an empty placeholder grid
+  // when changing sort/page-size while on a page > 0.
+  const onKeywordsChange = useCallback((value: string) => {
+    setKeywords(value);
     setPage(0);
-  }, [keywords, filters.pageSize, filters.sortBy, filters.sortDir]);
+  }, []);
+
+  // Reset to first page immediately when filters change. Same batching fix.
+  const onFiltersChange = useCallback(
+    (next: Partial<GameFiltersState>) => {
+      setFilters((prev) => ({ ...prev, ...next }));
+      setPage(0);
+    },
+    []
+  );
 
   // Debounce the keywords input — Epic's endpoint gets grumpy with rapid
   // partial queries.
@@ -49,9 +63,6 @@ export function BrowsePage() {
   const total = data?.total ?? 0;
   const pageCount = Math.max(1, Math.ceil(total / filters.pageSize));
 
-  const onFiltersChange = (next: Partial<GameFiltersState>) =>
-    setFilters((prev) => ({ ...prev, ...next }));
-
   return (
     <div className="mx-auto max-w-7xl px-6 py-6">
       <header className="mb-6">
@@ -67,7 +78,7 @@ export function BrowsePage() {
           className="input min-w-[18rem] flex-1"
           placeholder="Search by title…"
           value={keywords}
-          onChange={(e) => setKeywords(e.target.value)}
+          onChange={(e) => onKeywordsChange(e.target.value)}
         />
         <GameFilters state={filters} onChange={onFiltersChange} />
       </div>

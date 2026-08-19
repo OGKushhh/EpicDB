@@ -1,9 +1,14 @@
 @import "tailwindcss";
 
 @theme {
-  --color-base: #3D3C39;        /* page bg — user-requested warmer mid-gray */
-  --color-base-2: #4A4946;      /* card bg — stays LIGHTER than page bg */
-  --color-base-3: #575655;      /* table headers / deeper sections — lighter still */
+  --color-bg: #3D3C39;           /* page bg — user-requested warmer mid-gray
+                                    (renamed from --color-base to avoid colliding
+                                    with Tailwind's built-in text-base font-size
+                                    utility, which silently produced
+                                    `.text-base { color: var(--color-base) }`
+                                    and made button/page text invisible). */
+  --color-bg-2: #4A4946;         /* card bg — stays LIGHTER than page bg */
+  --color-bg-3: #575655;         /* table headers / deeper sections — lighter still */
   --color-accent: #41c647;
   --color-accent-hover: #4ade54;
   --color-accent-blue: #7dd3fc;
@@ -31,7 +36,7 @@
 
   body {
     font-family: var(--font-sans);
-    background-color: var(--color-base);
+    background-color: var(--color-bg);
     color: var(--color-text);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -80,21 +85,21 @@
   }
   /* Form inputs — scaled ~50% larger to match buttons. */
   .input {
-    @apply rounded-md border border-white/15 bg-[var(--color-base-2)] px-5 py-2.5 text-base
+    @apply rounded-md border border-white/15 bg-[var(--color-bg-2)] px-5 py-2.5 text-base
       text-[var(--color-text)] outline-none transition-colors
       placeholder:text-white/30 focus:border-[var(--color-accent-blue)] focus:ring-1
       focus:ring-[var(--color-accent-blue)]/40;
   }
   /* Compact inputs for filter dropdowns — slightly smaller than .input. */
   .input-compact {
-    @apply rounded-md border border-white/15 bg-[var(--color-base-2)] px-3 py-2 text-sm
+    @apply rounded-md border border-white/15 bg-[var(--color-bg-2)] px-3 py-2 text-sm
       text-[var(--color-text)] outline-none transition-colors cursor-pointer
       hover:border-[var(--color-accent-blue)] focus:border-[var(--color-accent-blue)]
       focus:ring-1 focus:ring-[var(--color-accent-blue)]/40;
   }
   /* Card surface */
   .card {
-    @apply rounded-lg border border-white/10 bg-[var(--color-base-2)] p-5;
+    @apply rounded-lg border border-white/10 bg-[var(--color-bg-2)] p-5;
   }
   /* Badge */
   .badge {
