@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import type { ManifestTitleEntry, ManifestTitleGroup } from "~/types/manifest";
 import { isSha1Fallback, findRelated } from "~/types/manifest";
 import { buildDownloadUrl } from "~/api/manifest";

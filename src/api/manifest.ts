@@ -159,6 +159,13 @@ export function cleanupManifests(dryRun = true): Promise<{
   });
 }
 
+/** Shape returned by POST /upload/manual on success. */
+export interface UploadResponse {
+  status: "ok";
+  uploaded: number;
+  apps: string[];
+}
+
 /** POST /rebuild — rebuild index.json by scanning the filesystem. */
 export function rebuildIndex(): Promise<{
   status: string;

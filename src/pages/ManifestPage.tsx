@@ -15,6 +15,7 @@ import {
   FILE_TYPE_FILTER,
   type ManifestFiltersState,
 } from "~/components/Manifest/ManifestFilters";
+import { UploadModal } from "~/components/Manifest/UploadModal";
 
 /** Default entries per page in the manifest grid. */
 const DEFAULT_PAGE_SIZE = 25;
@@ -46,6 +47,7 @@ export function ManifestPage() {
   });
   const [selected, setSelected] =
     useState<{ group: ManifestTitleGroup; entry: ManifestTitleEntry } | null>(null);
+  const [uploadOpen, setUploadOpen] = useState(false);
 
   const haystackFn = useCallback(
     (g: ManifestTitleGroup) =>
@@ -115,6 +117,7 @@ export function ManifestPage() {
   }, []);
 
   const closeSlideOver = useCallback(() => setSelected(null), []);
+  const handleUploadSuccess = useCallback(() => { refetch(); }, [refetch]);
 
   return (
     <div className="mx-auto max-w-7xl px-6 py-6">
@@ -125,13 +128,22 @@ export function ManifestPage() {
             Browse every manifest stored in the Epic-Unlocker database.
           </p>
         </div>
-        <button
-          onClick={() => refetch()}
-          className="btn-outline"
-          title="Refresh /titles"
-        >
-          ↻ Refresh
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setUploadOpen(true)}
+            className="btn-primary !py-2 !px-4 !text-sm"
+            title="Upload a manifest file"
+          >
+            <span aria-hidden>⬆</span> Upload
+          </button>
+          <button
+            onClick={() => refetch()}
+            className="btn-outline"
+            title="Refresh /titles"
+          >
+            ↻ Refresh
+          </button>
+        </div>
       </header>
 
       <GameStats />
@@ -179,6 +191,12 @@ export function ManifestPage() {
           />
         </div>
       )}
+
+      <UploadModal
+        open={uploadOpen}
+        onClose={() => setUploadOpen(false)}
+        onSuccess={handleUploadSuccess}
+      />
 
       <SlideOver
         open={selected !== null}
