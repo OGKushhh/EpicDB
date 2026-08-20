@@ -199,7 +199,7 @@ export function ManifestCard({
                         onClick={() => onSelect(c, group)}
                         className="flex cursor-pointer items-center gap-2 rounded-md border border-white/10 bg-[var(--color-bg-3)] px-2.5 py-1.5 text-xs transition-colors hover:bg-white/5"
                       >
-                        <span className={`font-sans text-[10px] font-semibold uppercase ${cStyle.pillText}`}
+                        <span className={`font-sans text-[10px] font-semibold uppercase ${cStyle.pillText}`}>
                           {c.file_type}
                         </span>
                         <span className="text-[var(--color-text-muted)]">
