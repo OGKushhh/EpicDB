@@ -110,10 +110,12 @@ export function ManifestDetailPage() {
         </div>
 
         {/* Custom Fields */}
-        <div className="card">
+        <div className="card flex min-h-0 flex-col overflow-hidden">
           <h3 className="mb-2.5 text-[11px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">Custom Fields</h3>
           {info.custom_fields && Object.keys(info.custom_fields).length > 0 ? (
-            <JsonViewer data={info.custom_fields} defaultExpandedDepth={2} />
+            <div className="min-h-0 flex-1 overflow-auto">
+              <JsonViewer data={info.custom_fields} defaultExpandedDepth={2} />
+            </div>
           ) : (
             <p className="text-sm text-[var(--color-text-muted)]">No custom fields.</p>
           )}

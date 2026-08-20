@@ -11,7 +11,7 @@ export function JsonViewer({
   className?: string;
 }) {
   return (
-    <div className={`mono text-xs leading-relaxed ${className}`}>
+    <div className={`mono text-xs leading-relaxed [overflow-wrap:anywhere] ${className}`}>
       <JsonNode
         value={data}
         name={null}
@@ -54,7 +54,7 @@ function JsonNode({
   // Leaf rendering
   if (!hasChildren) {
     return (
-      <div className="flex gap-1 py-0.5 pl-0">
+      <div className="flex flex-wrap gap-x-1 py-0.5 pl-0">
         {name !== null && <span className="text-[var(--color-accent)]">{name}:</span>}
         <span className={leafClass(value)}>{formatLeaf(value)}</span>
       </div>
