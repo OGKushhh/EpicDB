@@ -161,7 +161,7 @@ export function ManifestDetailPage() {
             {/* Tier 2 */}
             {tier2.length > 0 && (
               <>
-                {tier1.length > 0 && <div className="py-1.5 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">Other versions</div>
+                {tier1.length > 0 && <div className="py-1.5 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">Other versions</div>}
                 <div className="flex flex-col gap-2">
                   {tier2.map((c) => (
                     <RelatedItem
