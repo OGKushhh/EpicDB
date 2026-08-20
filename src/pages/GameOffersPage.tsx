@@ -124,7 +124,7 @@ function GameOffersContent({
               View on Epic Store →
             </a>
             <a
-              href={`https://egdata.app/games/${game.namespace}`}
+              href={`https://egdata.app/offers/${game.id}`}
               target="_blank"
               rel="noreferrer noopener"
               className="btn-outline !text-sm"
@@ -147,14 +147,14 @@ function GameOffersContent({
           )}
           {!egdata.featuresLoading && (drmFeatures.length > 0 || notableFeatures.length > 0) && (
             <div className="mt-3 flex flex-col gap-2">
-              <div className="text-xs uppercase tracking-wide text-[var(--color-text-muted)]">
+              <div className="text-[15px] uppercase tracking-wide text-[var(--color-text-muted)]">
                 Features
               </div>
               <div className="flex flex-wrap gap-1.5">
                 {drmFeatures.map((f) => (
                   <span
                     key={f}
-                    className="inline-flex items-center rounded-full bg-red-500/15 px-2.5 py-0.5 text-[10px] font-semibold uppercase text-red-400"
+                    className="inline-flex items-center rounded-full bg-red-500/15 px-2.5 py-0.5 text-xs font-semibold uppercase text-red-400"
                   >
                     {f}
                   </span>
@@ -162,7 +162,7 @@ function GameOffersContent({
                 {notableFeatures.map((f) => (
                   <span
                     key={f}
-                    className="inline-flex items-center rounded-full bg-[var(--color-accent-blue)]/15 px-2.5 py-0.5 text-[10px] font-semibold uppercase text-[var(--color-accent-blue)]"
+                    className="inline-flex items-center rounded-full bg-[var(--color-accent-blue)]/15 px-2.5 py-0.5 text-xs font-semibold uppercase text-[var(--color-accent-blue)]"
                   >
                     {f}
                   </span>
@@ -176,10 +176,10 @@ function GameOffersContent({
 
           {game.description && (
             <div className="mt-4">
-              <div className="text-xs uppercase tracking-wide text-[var(--color-text-muted)]">
+              <div className="text-[15px] uppercase tracking-wide text-[var(--color-text-muted)]">
                 Description
               </div>
-              <p className="mt-1 text-sm leading-relaxed text-[var(--color-text-muted)]">
+              <p className="mt-1 text-[15px] leading-relaxed text-[var(--color-text-muted)]">
                 {game.description}
               </p>
             </div>
@@ -207,8 +207,8 @@ function InfoRow({
   mono?: boolean;
 }) {
   return (
-    <div className="mt-2 flex items-center gap-3 text-sm">
-      <div className="w-32 shrink-0 text-[var(--color-text-muted)]">{label}</div>
+    <div className="mt-2 flex items-center gap-3 text-[15px]">
+      <div className="w-36 shrink-0 text-[var(--color-text-muted)]">{label}</div>
       <code className={`flex-1 break-all ${mono ? "mono" : ""}`}>{value}</code>
     </div>
   );
@@ -238,13 +238,13 @@ function CopyableRow({
 
   return (
     <div
-      className="mt-2 flex cursor-pointer items-center gap-3 text-sm transition-colors hover:bg-white/5 rounded px-1 -mx-1"
+      className="mt-2 flex cursor-pointer items-center gap-3 text-[15px] transition-colors hover:bg-white/5 rounded px-1 -mx-1"
       onClick={handleCopy}
       title="Click to copy"
     >
-      <div className="w-32 shrink-0 text-[var(--color-text-muted)]">{label}</div>
+      <div className="w-36 shrink-0 text-[var(--color-text-muted)]">{label}</div>
       <code className="mono flex-1 break-all">{value}</code>
-      <span className="shrink-0 text-[10px] text-[var(--color-text-muted)] transition-opacity">
+      <span className="shrink-0 text-[13px] text-[var(--color-text-muted)] transition-opacity">
         {copied ? "Copied!" : "Click to copy"}
       </span>
     </div>
@@ -309,13 +309,13 @@ function CopyableItemId({ id }: { id: string }) {
 
   return (
     <div
-      className="mono cursor-pointer rounded px-0.5 text-xs break-all transition-colors hover:bg-[var(--color-accent-blue)]/15 hover:text-[var(--color-accent-blue)]"
+      className="mono cursor-pointer rounded px-0.5 text-sm break-all transition-colors hover:bg-[var(--color-accent-blue)]/15 hover:text-[var(--color-accent-blue)]"
       onClick={handleClick}
       title="Click to copy"
     >
       {id}
       {copied && (
-        <span className="ml-1 text-[9px] text-[var(--color-accent)]">copied</span>
+        <span className="ml-1 text-[11px] text-[var(--color-accent)]">copied</span>
       )}
     </div>
   );
@@ -531,7 +531,7 @@ function OffersTable({ offers }: { offers: OfferElement[] }) {
                               />
                             </Zoom>
                           ) : (
-                            <div className="flex h-full w-full items-center justify-center text-[10px] text-[var(--color-text-muted)]">
+                            <div className="flex h-full w-full items-center justify-center text-xs text-[var(--color-text-muted)]">
                               —
                             </div>
                           )}
@@ -556,7 +556,7 @@ function OffersTable({ offers }: { offers: OfferElement[] }) {
                           {o.offerType || "—"}
                         </span>
                       </td>
-                      <td className="px-4 py-3 align-top text-xs text-[var(--color-text-muted)] whitespace-nowrap">
+                      <td className="px-4 py-3 align-top text-[15px] text-[var(--color-text-muted)] whitespace-nowrap">
                         {o.creationDate ? formatDate(o.creationDate) : "—"}
                       </td>
                     </tr>

@@ -1,10 +1,10 @@
+import { useState, useCallback } from "react";
 import { Link, useParams, useNavigate } from "react-router";
 import { useInfo, useTitles } from "~/hooks/useManifests";
 import { buildDownloadUrl, buildInfoUrl } from "~/api/manifest";
 import { findRelated } from "~/types/manifest";
 import type { ManifestTitleEntry } from "~/types/manifest";
 import { ErrorBlock, LoadingFallback } from "~/components/Loading";
-import { JsonViewer } from "~/components/JsonViewer";
 import { formatBytes, formatDateTime } from "~/utils/format";
 
 const DL_SVG = (
@@ -78,7 +78,7 @@ export function ManifestDetailPage() {
             <span className={`badge ${badgeClass}`}>{info.file_type}</span>
             <span className="mono break-all text-xs">{eid}</span>
           </div>
-          <div className="mt-0.5 text-xs text-[var(--color-text-muted)]">
+          <div className="mt-0.5 text-sm text-[var(--color-text-muted)]">
             v{info.build_version || "?"} · {formatBytes(info.file_size)} · {formatDateTime(info.uploaded_at)}
           </div>
         </div>
@@ -96,7 +96,7 @@ export function ManifestDetailPage() {
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {/* Build Info */}
         <div className="card">
-          <h3 className="mb-2.5 text-[11px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">Build Info</h3>
+          <h3 className="mb-2.5 text-sm font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">Build Info</h3>
           <KvRow label="app_name" value={info.app_name} mono />
           <KvRow label="app_id" value={String(info.app_id)} mono />
           <KvRow label="file_type" value={info.file_type} badge={info.file_type === "json" ? "blue" : "green"} />
@@ -111,10 +111,10 @@ export function ManifestDetailPage() {
 
         {/* Custom Fields */}
         <div className="card flex min-h-0 flex-col overflow-hidden">
-          <h3 className="mb-2.5 text-[11px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">Custom Fields</h3>
+          <h3 className="mb-2.5 text-sm font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">Custom Fields</h3>
           {info.custom_fields && Object.keys(info.custom_fields).length > 0 ? (
             <div className="min-h-0 flex-1 overflow-auto">
-              <JsonViewer data={info.custom_fields} defaultExpandedDepth={2} />
+              <CustomFieldsAccordion fields={info.custom_fields} />
             </div>
           ) : (
             <p className="text-sm text-[var(--color-text-muted)]">No custom fields.</p>
@@ -123,7 +123,7 @@ export function ManifestDetailPage() {
 
         {/* Hashes & Storage */}
         <div className="card">
-          <h3 className="mb-2.5 text-[11px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">Hashes & Storage</h3>
+          <h3 className="mb-2.5 text-sm font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">Hashes & Storage</h3>
           <KvRow label="sha256" value={info.sha256} mono small />
           <KvRow label="header_sha" value={info.header_sha_hash || "\u2014"} mono small />
           <KvRow label="storage_path" value={info.storage_path} mono small />
@@ -132,7 +132,7 @@ export function ManifestDetailPage() {
 
       {/* Related manifests */}
       <div className="border-t border-white/10 pt-4">
-        <h3 className="mb-2 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
+        <h3 className="mb-2 flex items-center gap-1.5 text-sm font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
           {LINK_SVG}
           Related Manifests ({tier1.length + tier2.length})
         </h3>
@@ -145,7 +145,7 @@ export function ManifestDetailPage() {
             {/* Tier 1 */}
             {tier1.length > 0 && (
               <>
-                <div className="py-1.5 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">Exact version match</div>
+                <div className="py-1.5 text-[13px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">Exact version match</div>
                 <div className="mb-3 flex flex-col gap-2">
                   {tier1.map((c) => (
                     <RelatedItem
@@ -163,7 +163,7 @@ export function ManifestDetailPage() {
             {/* Tier 2 */}
             {tier2.length > 0 && (
               <>
-                {tier1.length > 0 && <div className="py-1.5 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">Other versions</div>}
+                {tier1.length > 0 && <div className="py-1.5 text-[13px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">Other versions</div>}
                 <div className="flex flex-col gap-2">
                   {tier2.map((c) => (
                     <RelatedItem
@@ -186,6 +186,59 @@ export function ManifestDetailPage() {
 
 /* ── Sub-components ── */
 
+/** Accordion for custom fields — each key is a collapsible row. */
+function CustomFieldsAccordion({ fields }: { fields: Record<string, unknown> }) {
+  const entries = Object.entries(fields);
+  const [openSet, setOpenSet] = useState<Set<string>>(new Set());
+
+  const toggle = useCallback((key: string) => {
+    setOpenSet((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  }, []);
+
+  return (
+    <div className="flex flex-col">
+      {entries.map(([key, value]) => {
+        const isOpen = openSet.has(key);
+        const isComplex = value !== null && typeof value === "object";
+        const preview = isComplex
+          ? `${Array.isArray(value) ? "Array" : "Object"}(${Object.keys(value as object).length})`
+          : String(value);
+        const displayValue = isComplex
+          ? JSON.stringify(value, null, 2)
+          : String(value);
+
+        return (
+          <div key={key} className="border-b border-white/5 last:border-b-0">
+            <button
+              type="button"
+              onClick={() => toggle(key)}
+              className="flex w-full items-center gap-2 py-1.5 text-left transition-colors hover:bg-white/5"
+            >
+              <span className="w-3.5 shrink-0 text-[11px] text-[var(--color-text-muted)]">
+                {isOpen ? "▼" : "▶"}
+              </span>
+              <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-[var(--color-accent)]">{key}</span>
+              <span className={`shrink-0 truncate ${isComplex ? "text-[11px] text-[var(--color-text-muted)]" : "font-mono text-[13px] text-[var(--color-text)]"}`}>
+                {isComplex ? preview : (preview.length > 32 ? preview.slice(0, 32) + "…" : preview)}
+              </span>
+            </button>
+            {isOpen && (
+              <pre className="ml-5.5 mb-1.5 overflow-x-auto whitespace-pre-wrap break-all font-mono text-[13px] leading-relaxed text-[var(--color-text-muted)]">
+                {displayValue}
+              </pre>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 function KvRow({ label, value, mono, badge, small }: {
   label: string;
   value: string;
@@ -195,13 +248,13 @@ function KvRow({ label, value, mono, badge, small }: {
 }) {
   return (
     <div className="grid grid-cols-[110px_1fr] items-baseline gap-4 border-b border-white/5 py-1.5 text-sm last:border-b-0">
-      <span className="truncate text-[11px] uppercase tracking-wide text-[var(--color-text-muted)]">{label}</span>
+      <span className="truncate text-[13px] uppercase tracking-wide text-[var(--color-text-muted)]">{label}</span>
       {badge ? (
         <span className={`badge ${badge === "blue" ? "bg-[var(--color-accent-blue)]/15 text-[var(--color-accent-blue)]" : "bg-[var(--color-accent)]/15 text-[var(--color-accent)]"}`}>
           {value}
         </span>
       ) : (
-        <span className={`break-all ${mono ? "font-mono text-xs" : ""} ${small ? "!text-[11px]" : ""}`}>{value}</span>
+        <span className={`break-all ${mono ? "font-mono text-sm" : ""} ${small ? "!text-[13px]" : ""}`}>{value}</span>
       )}
     </div>
   );
@@ -234,15 +287,15 @@ function RelatedItem({ entry: c, groupName, isExact, onNavigate }: {
         <div className="flex items-center gap-1.5">
           <span className={`badge ${badgeClass}`}>{c.file_type}</span>
           {isExact && (
-            <span className="rounded bg-[var(--color-accent)]/10 px-1.5 py-0.5 text-[9px] font-medium text-[var(--color-accent)]">
+            <span className="rounded bg-[var(--color-accent)]/10 px-1.5 py-0.5 text-[11px] font-medium text-[var(--color-accent)]">
               same version
             </span>
           )}
         </div>
-        <div className="mono break-all text-xs" title={c.effective_id}>
+        <div className="mono break-all text-sm" title={c.effective_id}>
           {c.effective_id.length > 40 ? c.effective_id.slice(0, 40) + "\u2026" : c.effective_id}
         </div>
-        <div className="mt-0.5 text-[11px] text-[var(--color-text-muted)]">
+        <div className="mt-0.5 text-[13px] text-[var(--color-text-muted)]">
           v{c.build_version || "?"}{" \u00B7 "}
           {c.uploaded_at ? new Date(c.uploaded_at).toLocaleDateString() : ""}
         </div>

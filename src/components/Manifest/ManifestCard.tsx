@@ -94,13 +94,13 @@ export function ManifestCard({
         <h3 className="text-[22px] font-bold leading-tight break-words text-white">
           {title}
         </h3>
-        <div className="mt-0.5 mono text-xs text-[var(--color-text-muted)] break-all">
+        <div className="mt-0.5 mono text-sm text-[var(--color-text-muted)] break-all">
           {group.app_name}
         </div>
       </div>
 
       {/* Type badge + uploaded relative time */}
-      <div className="mb-3 flex items-center gap-2 text-xs">
+      <div className="mb-3 flex items-center gap-2 text-sm">
         <span className={`badge ${type.badge}`}>{type.label}</span>
         {fallback && (
           <span
@@ -118,16 +118,16 @@ export function ManifestCard({
       {/* Detail grid: Build ID + Build version */}
       <dl className="mb-1 grid grid-cols-1 gap-y-2 text-sm">
         <div className="flex flex-col">
-          <dt className="text-[10px] uppercase tracking-wide text-[var(--color-text-muted)]">
+          <dt className="text-[11px] uppercase tracking-wide text-[var(--color-text-muted)]">
             Build ID
           </dt>
-          <dd className="mono text-xs break-all">{entry.effective_id}</dd>
+          <dd className="mono text-[13px] break-all">{entry.effective_id}</dd>
         </div>
         <div className="flex flex-col">
-          <dt className="text-[10px] uppercase tracking-wide text-[var(--color-text-muted)]">
+          <dt className="text-[11px] uppercase tracking-wide text-[var(--color-text-muted)]">
             Build version
           </dt>
-          <dd className="mono text-xs break-all">
+          <dd className="mono text-[13px] break-all">
             {entry.build_version || "\u2014"}
           </dd>
         </div>
@@ -139,7 +139,7 @@ export function ManifestCard({
           {/* Tier 1: exact build_version match — download pills */}
           {tier1.length > 0 && (
             <>
-              <div className="mb-2 flex items-center gap-1.5 text-[10px] uppercase tracking-wide text-[var(--color-text-muted)]">
+              <div className="mb-2 flex items-center gap-1.5 text-[11px] uppercase tracking-wide text-[var(--color-text-muted)]">
                 {LINK_SVG}
                 Counterpart
                 <span className="font-semibold text-[var(--color-text)]">{tier1.length}</span>
@@ -151,9 +151,9 @@ export function ManifestCard({
                     <div
                       key={c.effective_id}
                       onClick={() => onSelect(c, group)}
-                      className={`inline-flex cursor-pointer items-center gap-1.5 rounded-md px-2.5 py-1 text-[11px] font-mono transition-colors ${cStyle.pillBg} ${cStyle.pillBorder} border`}
+                      className={`inline-flex cursor-pointer items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-mono transition-colors ${cStyle.pillBg} ${cStyle.pillBorder} border`}
                     >
-                      <span className={`font-sans text-[10px] font-semibold uppercase ${cStyle.pillText}`}>
+                      <span className={`font-sans text-[11px] font-semibold uppercase ${cStyle.pillText}`}>
                         {c.file_type}
                       </span>
                       <span className="text-[var(--color-text-muted)] max-w-[120px] truncate">
@@ -182,9 +182,9 @@ export function ManifestCard({
               <button
                 type="button"
                 onClick={() => setTier2Open((v) => !v)}
-                className="mt-2 flex items-center gap-1.5 text-[11px] text-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors"
+                className="mt-2 flex items-center gap-1.5 text-xs text-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors"
               >
-                <span className={`inline-block text-[9px] transition-transform ${tier2Open ? "rotate-90" : ""}`}>
+                <span className={`inline-block text-[11px] transition-transform ${tier2Open ? "rotate-90" : ""}`}>
                   ▶
                 </span>
                 Other {oppType} versions ({tier2.length})
@@ -197,9 +197,9 @@ export function ManifestCard({
                       <div
                         key={c.effective_id}
                         onClick={() => onSelect(c, group)}
-                        className="flex cursor-pointer items-center gap-2 rounded-md border border-white/10 bg-[var(--color-bg-3)] px-2.5 py-1.5 text-[11px] transition-colors hover:bg-white/5"
+                        className="flex cursor-pointer items-center gap-2 rounded-md border border-white/10 bg-[var(--color-bg-3)] px-2.5 py-1.5 text-xs transition-colors hover:bg-white/5"
                       >
-                        <span className={`font-sans text-[9px] font-semibold uppercase ${cStyle.pillText}`}>
+                        <span className={`font-sans text-[10px] font-semibold uppercase ${cStyle.pillText}`}
                           {c.file_type}
                         </span>
                         <span className="text-[var(--color-text-muted)]">
