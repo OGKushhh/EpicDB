@@ -148,13 +148,10 @@ export function ManifestCard({
                 {tier1.map((c) => {
                   const cStyle = TYPE_STYLES[c.file_type];
                   return (
-                    <a
+                    <div
                       key={c.effective_id}
-                      href={buildDownloadUrl(group.app_name, c.effective_id)}
-                      download={`${c.effective_id}.${c.file_type === "binary" ? "manifest" : "item"}`}
-                      onClick={(e) => e.stopPropagation()}
-                      title={`Download ${c.file_type}: ${c.effective_id}`}
-                      className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-[11px] font-mono transition-colors ${cStyle.pillBg} ${cStyle.pillBorder} border`}
+                      onClick={() => onSelect(c, group)}
+                      className={`inline-flex cursor-pointer items-center gap-1.5 rounded-md px-2.5 py-1 text-[11px] font-mono transition-colors ${cStyle.pillBg} ${cStyle.pillBorder} border`}
                     >
                       <span className={`font-sans text-[10px] font-semibold uppercase ${cStyle.pillText}`}>
                         {c.file_type}
@@ -162,8 +159,17 @@ export function ManifestCard({
                       <span className="text-[var(--color-text-muted)] max-w-[120px] truncate">
                         {truncate(c.effective_id)}
                       </span>
-                      <span className={cStyle.pillText}>{DL_SVG}</span>
-                    </a>
+                      {/* Download icon — stopPropagation so clicking it downloads instead of navigating */}
+                      <a
+                        href={buildDownloadUrl(group.app_name, c.effective_id)}
+                        download={`${c.effective_id}.${c.file_type === "binary" ? "manifest" : "item"}`}
+                        onClick={(e) => e.stopPropagation()}
+                        title={`Download ${c.file_type}: ${c.effective_id}`}
+                        className={`shrink-0 ${cStyle.pillText}`}
+                      >
+                        {DL_SVG}
+                      </a>
+                    </div>
                   );
                 })}
               </div>

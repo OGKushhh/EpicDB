@@ -5,6 +5,7 @@ import { Footer } from "~/components/Footer";
 import { Header, routes } from "~/components/Header";
 import { HomePage } from "~/pages/HomePage";
 import { ManifestPage } from "~/pages/ManifestPage";
+import { ManifestDetailPage } from "~/pages/ManifestDetailPage";
 import { BrowsePage } from "~/pages/BrowsePage";
 import { GameOffersPage } from "~/pages/GameOffersPage";
 
@@ -39,6 +40,7 @@ const router = createBrowserRouter([
     children: [
       { index: true, element: <HomePage /> },
       { path: "manifests", element: <ManifestPage /> },
+      { path: "manifests/:appName/:effectiveId", element: <ManifestDetailPage /> },
       { path: "browse", element: <BrowsePage /> },
       { path: "browse/:namespace", element: <GameOffersPage /> },
       // Legacy /graphql → /browse redirect.

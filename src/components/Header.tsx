@@ -4,6 +4,7 @@ import { Link, useLocation } from "react-router";
 export const routes = {
   home: "/",
   manifests: "/manifests",
+  manifestDetail: "/manifests/:appName/:effectiveId",
   browse: "/browse",
   game: "/browse/:namespace",
 } as const;

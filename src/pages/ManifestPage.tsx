@@ -1,12 +1,11 @@
 import { useCallback, useMemo, useState } from "react";
+import { useNavigate } from "react-router";
 import { useTitles } from "~/hooks/useManifests";
 import type { ManifestTitleEntry, ManifestTitleGroup } from "~/types/manifest";
 import { ErrorBlock, GameGridSkeleton, EmptyState } from "~/components/Loading";
 import { GameSearch, useFilteredGames } from "~/components/Manifest/GameSearch";
 import { GameStats } from "~/components/Manifest/GameStats";
 import { ManifestCardGrid } from "~/components/Manifest/ManifestCardGrid";
-import { GameDetail } from "~/components/Manifest/GameDetail";
-import { SlideOver } from "~/components/SlideOver";
 import { Pagination } from "~/components/Pagination";
 import {
   ManifestFilters,
@@ -48,8 +47,7 @@ export function ManifestPage() {
     fileType: FILE_TYPE_FILTER.ALL,
     counterpart: COUNTERPART_FILTER.ALL,
   });
-  const [selected, setSelected] =
-    useState<{ group: ManifestTitleGroup; entry: ManifestTitleEntry } | null>(null);
+  const navigate = useNavigate();
   const [uploadOpen, setUploadOpen] = useState(false);
 
   const haystackFn = useCallback(
@@ -126,8 +124,10 @@ export function ManifestPage() {
     setPage(0);
   }, []);
 
-  const closeSlideOver = useCallback(() => setSelected(null), []);
   const handleUploadSuccess = useCallback(() => { refetch(); }, [refetch]);
+  const handleSelect = useCallback((entry: ManifestTitleEntry, group: ManifestTitleGroup) => {
+    navigate(`/manifests/${encodeURIComponent(group.app_name)}/${encodeURIComponent(entry.effective_id)}`);
+  }, [navigate]);
 
   return (
     <div className="mx-auto max-w-7xl px-6 py-6">
@@ -185,12 +185,8 @@ export function ManifestPage() {
         <div className="flex flex-col gap-5">
           <ManifestCardGrid
             entries={pageEntries}
-            onSelect={(entry, group) => setSelected({ group, entry })}
-            selected={
-              selected
-                ? { appName: selected.group.app_name, effectiveId: selected.entry.effective_id }
-                : null
-            }
+            onSelect={handleSelect}
+            selected={null}
           />
           <Pagination
             page={safePage}
@@ -207,21 +203,6 @@ export function ManifestPage() {
         onClose={() => setUploadOpen(false)}
         onSuccess={handleUploadSuccess}
       />
-
-      <SlideOver
-        open={selected !== null}
-        onClose={closeSlideOver}
-        title={selected ? selected.entry.effective_id : ""}
-        subtitle={selected ? selected.group.display_name || selected.group.app_name : "Details"}
-      >
-        {selected && (
-          <GameDetail
-            group={selected.group}
-            entry={selected.entry}
-            onViewEntry={(e, g) => setSelected({ group: g, entry: e })}
-          />
-        )}
-      </SlideOver>
     </div>
   );
 }
