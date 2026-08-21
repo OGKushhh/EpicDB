@@ -1,6 +1,6 @@
 /** Sort/order/page-size dropdowns for the Browse page. Matches ScreamDB's filter bar. */
 
-export const PAGE_SIZE_OPTIONS = [10, 25, 50, 100] as const;
+export const PAGE_SIZE_OPTIONS = [12, 24, 48, 96] as const;
 export type PageSize = (typeof PAGE_SIZE_OPTIONS)[number];
 
 export const SORT_BY = {

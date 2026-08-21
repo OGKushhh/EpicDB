@@ -19,7 +19,7 @@ export function BrowsePage() {
   const [keywords, setKeywords] = useState("");
   const [page, setPage] = useState(0);
   const [filters, setFilters] = useState<GameFiltersState>({
-    pageSize: 25,
+    pageSize: 24,
     sortBy: SORT_BY.CREATION_DATE,
     sortDir: SORT_DIR.DESC,
   });

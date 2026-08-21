@@ -15,7 +15,7 @@
   --color-header-bg: #f5c400;       /* warm amber-gold yellow */
   --color-header-fg: #1f1d1a;       /* dark text on yellow header */
   --color-header-fg-muted: #5b5440;  /* slightly dimmed dark text for inactive tabs */
-  --color-logo-bg: #7dd3fc;
+  --color-logo-bg: #24B3ED;
   --color-text: #ddd;
   --color-text-muted: #b5a878;       /* warm amber-gray — picks up the gold header band
                                     and stays readable on the warm mid-gray page bg.

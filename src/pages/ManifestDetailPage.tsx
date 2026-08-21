@@ -113,7 +113,7 @@ export function ManifestDetailPage() {
         <div className="card flex max-h-[520px] min-h-0 flex-col overflow-hidden">
           <h3 className="mb-2.5 shrink-0 text-sm font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">Custom Fields</h3>
           {info.custom_fields && Object.keys(info.custom_fields).length > 0 ? (
-            <div className="min-h-0 flex-1 overflow-y-auto">
+            <div className="min-h-0 flex-1 overflow-y-auto [scrollbar-gutter:stable] pr-1">
               <CustomFieldsAccordion fields={info.custom_fields} />
             </div>
           ) : (
@@ -285,9 +285,9 @@ function RelatedItem({ entry: c, groupName, isExact, onNavigate }: {
     >
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-1.5">
-          <span className={`badge ${badgeClass}`}>{c.file_type}</span>
+          <span className={`inline-flex items-center rounded-full bg-[var(--color-bg-3)] px-2 py-0.5 text-xs font-semibold uppercase ${badgeClass}`}>{c.file_type}</span>
           {isExact && (
-            <span className="rounded bg-[var(--color-accent)]/10 px-1.5 py-0.5 text-[11px] font-medium text-[var(--color-accent)]">
+            <span className="rounded bg-[var(--color-accent)]/10 px-2 py-0.5 text-xs font-medium text-[var(--color-accent)]">
               same version
             </span>
           )}
