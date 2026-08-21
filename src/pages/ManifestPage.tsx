@@ -53,7 +53,6 @@ export function ManifestPage() {
   const navigate = useNavigate();
   const [uploadOpen, setUploadOpen] = useState(false);
   const [dlAllState, setDlAllState] = useState<"idle" | "loading" | "error">("idle");
-  const [dlProgress, setDlProgress] = useState(0);
   const abortRef = useRef<AbortController | null>(null);
 
   const handleDownloadAll = useCallback(async () => {
@@ -66,46 +65,25 @@ export function ManifestPage() {
     const controller = new AbortController();
     abortRef.current = controller;
     setDlAllState("loading");
-    setDlProgress(0);
 
     try {
       const res = await fetch(`${API_BASE}/api/manifest/download-all`, { signal: controller.signal });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const contentLength = res.headers.get("content-length");
-      const total = contentLength ? Number(contentLength) : 0;
 
-      if (!res.body) {
-        // Fallback: no streaming support, just blob download
-        const blob = await res.blob();
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url; a.download = "manifests.zip"; a.click();
-        URL.revokeObjectURL(url);
-        setDlAllState("idle");
-        return;
-      }
-
-      const reader = res.body.getReader();
-      const chunks: Uint8Array[] = [];
-      let received = 0;
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        chunks.push(value);
-        received += value.length;
-        setDlProgress(total > 0 ? Math.round((received / total) * 100) : -1);
-      }
-
-      const blob = new Blob(chunks as BlobPart[], { type: "application/zip" });
+      const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
-      a.href = url; a.download = "manifests.zip"; a.click();
+      a.href = url;
+      a.download = "manifests.zip";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
       URL.revokeObjectURL(url);
       setDlAllState("idle");
     } catch (err) {
       if ((err as Error).name !== "AbortError") {
         setDlAllState("error");
+        console.error("Download All failed:", err);
       }
     } finally {
       if (abortRef.current === controller) abortRef.current = null;
@@ -223,7 +201,7 @@ export function ManifestPage() {
             {dlAllState === "loading" ? (
               <>
                 <span className="inline-block w-3.5 text-center">⏳</span>{" "}
-                {dlProgress > 0 ? `${dlProgress}%` : "..."}
+    ...
               </>
             ) : dlAllState === "error" ? (
               <>
