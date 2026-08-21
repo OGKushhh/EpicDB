@@ -93,7 +93,7 @@ export function ManifestDetailPage() {
       </div>
 
       {/* 3 Boxes */}
-      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 items-start">
         {/* Build Info */}
         <div className="card">
           <h3 className="mb-2.5 text-sm font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">Build Info</h3>
@@ -110,10 +110,10 @@ export function ManifestDetailPage() {
         </div>
 
         {/* Custom Fields */}
-        <div className="card flex min-h-0 flex-col overflow-hidden">
-          <h3 className="mb-2.5 text-sm font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">Custom Fields</h3>
+        <div className="card flex max-h-[520px] min-h-0 flex-col overflow-hidden">
+          <h3 className="mb-2.5 shrink-0 text-sm font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">Custom Fields</h3>
           {info.custom_fields && Object.keys(info.custom_fields).length > 0 ? (
-            <div className="min-h-0 flex-1 overflow-auto">
+            <div className="min-h-0 flex-1 overflow-y-auto">
               <CustomFieldsAccordion fields={info.custom_fields} />
             </div>
           ) : (
