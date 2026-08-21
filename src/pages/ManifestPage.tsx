@@ -97,7 +97,7 @@ export function ManifestPage() {
         setDlProgress(total > 0 ? Math.round((received / total) * 100) : -1);
       }
 
-      const blob = new Blob(chunks, { type: "application/zip" });
+      const blob = new Blob(chunks as BlobPart[], { type: "application/zip" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url; a.download = "manifests.zip"; a.click();
