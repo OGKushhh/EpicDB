@@ -19,7 +19,7 @@ import { findRelated } from "~/types/manifest";
 import { UploadModal } from "~/components/Manifest/UploadModal";
 
 /** Default entries per page in the manifest grid. */
-const DEFAULT_PAGE_SIZE = 25;
+const DEFAULT_PAGE_SIZE = 24;
 
 /** A flattened entry paired with its parent group for easy pagination. */
 interface FlatEntry {
