@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import { useTitles } from "~/hooks/useManifests";
 import type { ManifestTitleEntry, ManifestTitleGroup } from "~/types/manifest";
@@ -17,6 +17,9 @@ import {
 } from "~/components/Manifest/ManifestFilters";
 import { findRelated } from "~/types/manifest";
 import { UploadModal } from "~/components/Manifest/UploadModal";
+
+/** Build the API base URL from env (same logic as api/manifest.ts). */
+const API_BASE = (import.meta.env.VITE_MANIFEST_API_BASE ?? "").replace(/\/+$/, "");
 
 /** Default entries per page in the manifest grid. */
 const DEFAULT_PAGE_SIZE = 24;
@@ -49,6 +52,72 @@ export function ManifestPage() {
   });
   const navigate = useNavigate();
   const [uploadOpen, setUploadOpen] = useState(false);
+  const [dlAllState, setDlAllState] = useState<"idle" | "loading" | "error">("idle");
+  const [dlProgress, setDlProgress] = useState(0);
+  const abortRef = useRef<AbortController | null>(null);
+
+  const handleDownloadAll = useCallback(async () => {
+    if (!API_BASE) {
+      setDlAllState("error");
+      return;
+    }
+    const prev = abortRef.current;
+    prev?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+    setDlAllState("loading");
+    setDlProgress(0);
+
+    try {
+      const res = await fetch(`${API_BASE}/api/manifest/download-all`, { signal: controller.signal });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const contentLength = res.headers.get("content-length");
+      const total = contentLength ? Number(contentLength) : 0;
+
+      if (!res.body) {
+        // Fallback: no streaming support, just blob download
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url; a.download = "manifests.zip"; a.click();
+        URL.revokeObjectURL(url);
+        setDlAllState("idle");
+        return;
+      }
+
+      const reader = res.body.getReader();
+      const chunks: Uint8Array[] = [];
+      let received = 0;
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        chunks.push(value);
+        received += value.length;
+        setDlProgress(total > 0 ? Math.round((received / total) * 100) : -1);
+      }
+
+      const blob = new Blob(chunks, { type: "application/zip" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = "manifests.zip"; a.click();
+      URL.revokeObjectURL(url);
+      setDlAllState("idle");
+    } catch (err) {
+      if ((err as Error).name !== "AbortError") {
+        setDlAllState("error");
+      }
+    } finally {
+      if (abortRef.current === controller) abortRef.current = null;
+    }
+  }, []);
+
+  // Auto-dismiss error after 4s
+  useEffect(() => {
+    if (dlAllState !== "error") return;
+    const t = setTimeout(() => setDlAllState("idle"), 4000);
+    return () => clearTimeout(t);
+  }, [dlAllState]);
 
   const haystackFn = useCallback(
     (g: ManifestTitleGroup) =>
@@ -145,6 +214,26 @@ export function ManifestPage() {
             title="Upload a manifest file"
           >
             <span aria-hidden>⬆</span> Upload
+          </button>
+          <button
+            onClick={dlAllState === "loading" ? () => abortRef.current?.abort() : handleDownloadAll}
+            className={`btn-outline !py-2 !px-4 !text-sm ${dlAllState === "loading" ? "!border-amber-500/50 !text-amber-400" : dlAllState === "error" ? "!border-red-500/50 !text-red-400" : ""}`}
+            title={dlAllState === "loading" ? "Cancel download" : "Download all manifests as ZIP"}
+          >
+            {dlAllState === "loading" ? (
+              <>
+                <span className="inline-block w-3.5 text-center">⏳</span>{" "}
+                {dlProgress > 0 ? `${dlProgress}%` : "..."}
+              </>
+            ) : dlAllState === "error" ? (
+              <>
+                <span>⚠</span>{" "}Failed
+              </>
+            ) : (
+              <>
+                <span aria-hidden>⬇</span> Download All
+              </>
+            )}
           </button>
           <button
             onClick={() => refetch()}
