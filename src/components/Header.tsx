@@ -52,7 +52,7 @@ export function Header() {
 
         <div className="ml-auto flex items-center gap-4 text-base text-[var(--color-header-fg-muted)]">
           <a
-            href="https://github.com/acidicoala/EpicDB#readme"
+            href="https://github.com/OGKushhh/EpicDB#readme"
             target="_blank"
             rel="noreferrer noopener"
             className="hover:text-[var(--color-header-fg)]"
